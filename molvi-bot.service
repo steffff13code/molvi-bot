@@ -1,0 +1,21 @@
+[Unit]
+Description=MOLVI Telegram bot (@molviai_bot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Замените на реального пользователя и абсолютный путь на сервере:
+User=molvi
+WorkingDirectory=/home/molvi/molvi-bot
+# .env подхватывается самим приложением (pydantic-settings), но можно и так:
+EnvironmentFile=/home/molvi/molvi-bot/.env
+ExecStart=/home/molvi/molvi-bot/.venv/bin/python -m bot
+Restart=always
+RestartSec=5
+# Логи бота пишутся в logs/molvi.log; дублируем в journald:
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

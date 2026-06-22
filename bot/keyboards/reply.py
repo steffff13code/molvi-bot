@@ -1,0 +1,22 @@
+from __future__ import annotations
+
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+
+# Тексты кнопок главного меню (используются и в хендлерах для сопоставления).
+BTN_TRANSCRIBE = "🎙 Расшифровать"
+BTN_TARIFFS = "💳 Тарифы"
+BTN_DEVICE = "🛒 Купить диктофон"
+BTN_HELP = "ℹ️ Помощь"
+
+
+def main_menu_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=BTN_TRANSCRIBE)],
+            [KeyboardButton(text=BTN_TARIFFS), KeyboardButton(text=BTN_DEVICE)],
+            [KeyboardButton(text=BTN_HELP)],
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+        input_field_placeholder="Пришлите аудио, голосовое или видео…",
+    )
