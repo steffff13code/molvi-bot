@@ -7,9 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).parent.parent  # molvi-bot/
 
 
+_env_file = BASE_DIR / ".env"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(BASE_DIR / ".env"),
+        env_file=str(_env_file) if _env_file.exists() else None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
