@@ -25,6 +25,11 @@ async def get_db() -> AsyncIterator[aiosqlite.Connection]:
 
 
 async def init_db() -> None:
+    """Создаёт схему МЕТАДАННЫХ (Вариант А — контент пользователей не хранится).
+
+    В БД нет ни расшифровок, ни саммари, ни файлов — только обезличиваемые
+    метаданные для лимитов и агрегированной статистики.
+    """
     _ensure_parent_dir(settings.db_path)
     async with aiosqlite.connect(settings.db_path) as db:
         await db.execute("PRAGMA foreign_keys = ON;")
@@ -35,34 +40,48 @@ async def init_db() -> None:
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
                 first_name TEXT,
+                consent_at TIMESTAMP,
+                minutes_used REAL NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Журнал событий для агрегированной статистики (без контента).
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                type TEXT NOT NULL,            -- recognize | template | paywall | error | export
+                template TEXT,                 -- ключ шаблона (для разбивки)
+                fmt TEXT,                      -- формат экспорта (txt/pdf/docx)
+                duration_sec INTEGER,          -- длительность распознанной записи
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
-            CREATE TABLE IF NOT EXISTS records (
+            -- Белый список (безлимит). Только идентификатор, без контента.
+            CREATE TABLE IF NOT EXISTS whitelist (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                tg_file_id TEXT,
-                duration_sec INTEGER,
-                transcript TEXT,
-                title TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                tg_id INTEGER UNIQUE,
+                username TEXT UNIQUE,          -- нижний регистр, без '@'
+                note TEXT,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
-            CREATE TABLE IF NOT EXISTS outputs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                record_id INTEGER NOT NULL,
-                type TEXT NOT NULL,
-                content TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE,
-                UNIQUE(record_id, type)
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_records_user ON records(user_id, created_at DESC);
-            CREATE INDEX IF NOT EXISTS idx_outputs_record ON outputs(record_id);
+            CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
+            CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id, created_at);
+            CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, created_at);
             """
         )
 
+        # Мягкие миграции для старых БД (если колонок ещё нет).
+        await _ensure_column(db, "users", "consent_at", "TIMESTAMP")
+        await _ensure_column(db, "users", "minutes_used", "REAL NOT NULL DEFAULT 0")
+        await _ensure_column(db, "users", "last_seen_at", "TIMESTAMP")
+
         await db.commit()
 
+
+async def _ensure_column(db: aiosqlite.Connection, table: str, column: str, decl: str) -> None:
+    cur = await db.execute(f"PRAGMA table_info({table});")
+    cols = {row[1] for row in await cur.fetchall()}
+    if column not in cols:
+        await db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl};")

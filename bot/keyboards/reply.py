@@ -4,7 +4,8 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 # Тексты кнопок главного меню (используются и в хендлерах для сопоставления).
 BTN_TRANSCRIBE = "🎙 Расшифровать"
-BTN_TARIFFS = "💳 Тарифы"
+BTN_TEMPLATES = "📋 Шаблоны"
+BTN_TARIFFS = "💳 Тарифы / Купить минуты"
 BTN_DEVICE = "🛒 Купить диктофон"
 BTN_HELP = "ℹ️ Помощь"
 
@@ -13,8 +14,8 @@ def main_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=BTN_TRANSCRIBE)],
-            [KeyboardButton(text=BTN_TARIFFS), KeyboardButton(text=BTN_DEVICE)],
-            [KeyboardButton(text=BTN_HELP)],
+            [KeyboardButton(text=BTN_TEMPLATES), KeyboardButton(text=BTN_TARIFFS)],
+            [KeyboardButton(text=BTN_DEVICE), KeyboardButton(text=BTN_HELP)],
         ],
         resize_keyboard=True,
         is_persistent=True,

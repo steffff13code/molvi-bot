@@ -4,10 +4,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 from loguru import logger
 
+from bot.api import start_api
 from bot.config import settings
 from bot.db.database import init_db
 from bot.handlers.help import router as help_router
-from bot.handlers.records import router as records_router
 from bot.handlers.start import router as start_router
 from bot.handlers.voice import router as voice_router
 from bot.logging import setup_logging
@@ -17,7 +17,6 @@ from bot.services.cleanup import start_cleanup_task
 async def _setup_menu_button(bot: Bot) -> None:
     """Заменяет левую menu-кнопку (список команд) на кнопку «Сайт» (web_app)."""
     try:
-        # Чистим список команд, чтобы кнопка не открывала перечень "/" команд.
         await bot.delete_my_commands()
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(
@@ -41,12 +40,17 @@ async def main() -> None:
 
     dp.include_router(start_router)
     dp.include_router(voice_router)
-    dp.include_router(records_router)
     dp.include_router(help_router)
 
     await _setup_menu_button(bot)
 
     start_cleanup_task()
+
+    # HTTP-API для админки (если задан порт/токен) — параллельно polling.
+    if settings.api_port:
+        await start_api(settings.api_port)
+    else:
+        logger.info("API not started (no PORT in env)")
 
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("Bot polling started")

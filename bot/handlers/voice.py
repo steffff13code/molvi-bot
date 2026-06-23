@@ -1,31 +1,47 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 
-from aiogram import Bot, Router, types
+from aiogram import Bot, F, Router, types
 from loguru import logger
 
 from bot.config import settings
-from bot.db.queries import create_record, upsert_user
-from bot.keyboards.inline import record_actions_kb
+from bot.db.queries import (
+    add_minutes,
+    get_minutes_used,
+    has_consent,
+    is_whitelisted,
+    log_event,
+    upsert_user,
+)
+from bot.keyboards.inline import choose_mode_kb, consent_kb, result_kb, templates_kb
 from bot.keyboards.reply import main_menu_kb
-from bot.services.audio import AUDIO_DIR, convert_to_wav, ensure_dirs
+from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
+from bot.services.audio import AUDIO_DIR, ensure_dirs
+from bot.services.export import build_export
+from bot.services.pricing import FREE_MINUTES, paywall_text
+from bot.services.providers import STTQuotaError, get_llm, get_stt
 from bot.services.retry import with_retries
-from bot.services.salute_speech import SaluteSpeechClient, SaluteSpeechQuotaError
+from bot.services.session_store import session_store
+from bot.utils import as_txt_file, split_telegram_text
 
 router = Router()
 
-salute_client = SaluteSpeechClient(
-    auth_key=settings.salutespeech_auth_key,
-    scope=settings.salutespeech_scope,
-)
+_stt = get_stt()
+_llm = get_llm()
 
 # Поддерживаемые расширения для документов (на случай, если файл прислали «файлом»).
 _SUPPORTED_DOC_EXTS = {
     ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".aac", ".flac", ".opus", ".wma", ".amr",
     ".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".3gp",
 }
+
+CONSENT_REQUIRED_TEXT = (
+    "Перед началом работы подтвердите согласие с документами — нажмите «✅ Подтвердить» "
+    "в сообщении ниже. Это нужно один раз."
+)
 
 
 def _ext_from_name(name: str | None) -> str:
@@ -36,11 +52,21 @@ def _ext_from_name(name: str | None) -> str:
 
 
 def _is_supported_document(doc: types.Document) -> bool:
-    """Проверяет, что документ — аудио/видео (по mime или расширению)."""
     mime = (doc.mime_type or "").lower()
     if mime.startswith("audio/") or mime.startswith("video/"):
         return True
     return _ext_from_name(doc.file_name) in _SUPPORTED_DOC_EXTS
+
+
+async def _ensure_consent(message: types.Message, user_id: int) -> bool:
+    """True если согласие есть. Иначе показывает запрос согласия и возвращает False."""
+    if await has_consent(user_id):
+        return True
+    await message.answer(
+        "👋 Это МОЛВИ — расшифрую аудио в текст.\n\n" + CONSENT_REQUIRED_TEXT,
+        reply_markup=consent_kb(),
+    )
+    return False
 
 
 @router.message(lambda m: bool(m.voice or m.audio or m.document or m.video or m.video_note))
@@ -52,6 +78,9 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         return
 
     await upsert_user(user_id=user.id, username=user.username, first_name=user.first_name)
+
+    if not await _ensure_consent(message, user.id):
+        return
 
     tg_file_id: str | None = None
     duration_sec: int | None = None
@@ -105,59 +134,171 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
 
+    # Лимит/whitelist: безлимит для whitelist, иначе бесплатные FREE_MINUTES.
+    whitelisted = await is_whitelisted(user.id, user.username)
+    if not whitelisted:
+        used = await get_minutes_used(user.id)
+        if used >= FREE_MINUTES:
+            await log_event(user_id=user.id, type_="paywall")
+            await message.answer(paywall_text(), parse_mode="HTML", disable_web_page_preview=True)
+            return
+
     dur_text = f" ({duration_sec} сек)" if duration_sec else ""
-    status_msg = await message.answer(f"🎧 Принял запись{dur_text}. Расшифровываю…")
+    status_msg = await message.answer(f"🎧 Принял запись{dur_text}. Распознаю…")
 
     uid = uuid.uuid4().hex
-    source_path = str(AUDIO_DIR / f"{uid}_src{_ext_from_name(file_name) or ''}")
-    pcm_path = str(AUDIO_DIR / f"{uid}.pcm")
+    source_path = str(AUDIO_DIR / f"{uid}_src{_ext_from_name(file_name) or '.mp3'}")
 
     try:
         tg_file = await bot.get_file(tg_file_id)  # type: ignore[arg-type]
-
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
 
-        await convert_to_wav(source_path, pcm_path)
-
-        async def _recognize() -> str:
-            if duration_sec is None or duration_sec <= 55:
-                try:
-                    return await salute_client.recognize_short(pcm_path)
-                except SaluteSpeechQuotaError:
-                    raise  # квота — фолбэк на long не поможет
-                except Exception as e:
-                    logger.warning("Short recognize failed, fallback to long: {e}", e=e)
-                    return await salute_client.recognize_long(pcm_path)
-            return await salute_client.recognize_long(pcm_path)
-
-        transcript = await with_retries(_recognize, attempts=3, base_delay=2.0)
-
-        record_id = await create_record(
-            user_id=user.id,
-            tg_file_id=tg_file_id,
-            duration_sec=duration_sec,
-            transcript=transcript,
+        transcript = await with_retries(
+            lambda: _stt.transcribe(source_path, duration_sec), attempts=3, base_delay=2.0
         )
-
+    except STTQuotaError:
+        logger.error("STT quota exhausted (402)")
         await status_msg.edit_text(
-            "✅ Готово! Что сделать с записью?",
-            reply_markup=record_actions_kb(record_id),
-        )
-    except SaluteSpeechQuotaError:
-        logger.error("SaluteSpeech quota exhausted (402)")
-        await status_msg.edit_text(
-            "⚠️ Сервис распознавания временно недоступен (исчерпан пакет SaluteSpeech). "
+            "⚠️ Сервис распознавания временно недоступен (исчерпан пакет). "
             "Мы уже пополняем баланс — попробуйте чуть позже."
         )
+        return
     except Exception as e:
-        logger.exception("Voice handler failed: {e}", e=e)
+        logger.exception("Recognition failed: {e}", e=e)
+        await log_event(user_id=user.id, type_="error")
         await status_msg.edit_text(
             "⚠️ Не удалось расшифровать запись. Попробуйте ещё раз через минуту."
         )
+        return
     finally:
-        for path in (source_path, pcm_path):
-            try:
-                if os.path.exists(path):
-                    os.remove(path)
-            except Exception:
-                pass
+        # Вариант А: исходный файл удаляется сразу после распознавания.
+        try:
+            if os.path.exists(source_path):
+                os.remove(source_path)
+        except Exception:
+            pass
+
+    # Учёт минут (метаданные) + событие. Контент НЕ сохраняется.
+    if duration_sec:
+        await add_minutes(user.id, duration_sec / 60.0)
+    await log_event(user_id=user.id, type_="recognize", duration_sec=duration_sec)
+
+    # Транскрипт держим только в RAM на время сессии (для смены шаблона).
+    token = session_store.put(user.id, transcript, duration_sec)
+
+    await status_msg.edit_text(
+        "✅ Готово! Что сделать с записью?",
+        reply_markup=choose_mode_kb(token),
+    )
+
+
+# ───────────────────────── Колбэки выбора режима/шаблона ─────────────────────────
+
+@router.callback_query(F.data.startswith("m:"))
+async def on_mode(cb: types.CallbackQuery) -> None:
+    if not cb.from_user or not cb.message:
+        return
+    _, token, action = cb.data.split(":", 2)
+    if action == "plain":
+        await _process(cb, token, "plain")
+        return
+    if action == "tpl":
+        await cb.message.edit_text("📋 Выберите шаблон:", reply_markup=templates_kb(token))
+        await cb.answer()
+        return
+    if action == "back":
+        await cb.message.edit_text("Что сделать с записью?", reply_markup=choose_mode_kb(token))
+        await cb.answer()
+        return
+
+
+@router.callback_query(F.data.startswith("t:"))
+async def on_template(cb: types.CallbackQuery) -> None:
+    _, token, key = cb.data.split(":", 2)
+    await _process(cb, token, key)
+
+
+@router.callback_query(F.data.startswith("chg:"))
+async def on_change_template(cb: types.CallbackQuery) -> None:
+    if not cb.message:
+        return
+    token = cb.data.split(":", 1)[1]
+    # Повторная обработка БЕЗ повторного распознавания — транскрипт берётся из RAM.
+    await cb.message.answer("📋 Выберите другой шаблон:", reply_markup=templates_kb(token))
+    await cb.answer()
+
+
+@router.callback_query(F.data.startswith("dl:"))
+async def on_download(cb: types.CallbackQuery) -> None:
+    user = cb.from_user
+    if not user or not cb.message:
+        return
+    _, token, fmt = cb.data.split(":", 2)
+    entry = session_store.get(token, user.id)
+    if not entry:
+        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        return
+    await cb.answer("Готовлю файл…")
+    try:
+        data, filename = await asyncio.to_thread(build_export, fmt, "Расшифровка", entry.transcript)
+        await cb.message.answer_document(
+            types.BufferedInputFile(data, filename=filename),
+            caption=f"📄 Полный текст ({fmt.upper()})",
+        )
+        await log_event(user_id=user.id, type_="export", fmt=fmt)
+    except Exception as e:
+        logger.exception("Export failed: {e}", e=e)
+        await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
+
+
+async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
+    user = cb.from_user
+    if not user or not cb.message:
+        return
+    entry = session_store.get(token, user.id)
+    if not entry:
+        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        return
+
+    await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)
+    await cb.answer()
+
+    transcript = entry.transcript
+    try:
+        system, prefix = build_summary_prompt(key)
+        summary = await with_retries(
+            lambda: _llm.summarize(text=prefix + transcript, system=system),
+            attempts=3,
+            base_delay=1.0,
+        )
+        await log_event(user_id=user.id, type_="template", template=key)
+    except Exception as e:
+        logger.exception("Summary failed: {e}", e=e)
+        await log_event(user_id=user.id, type_="error")
+        await cb.message.edit_text(
+            "⚠️ Не удалось обработать через GigaChat. Попробуйте ещё раз.",
+            reply_markup=result_kb(token),
+        )
+        return
+
+    label = TEMPLATES.get(key, TEMPLATES["plain"]).label
+    # 1) Структурированное саммари
+    head = f"<b>{label}</b>\n\n{summary}".strip()
+    parts = split_telegram_text(head)
+    await cb.message.edit_text(parts[0], parse_mode="HTML")
+    for p in parts[1:]:
+        await cb.message.answer(p, parse_mode="HTML")
+
+    # 2) Полный текст (сообщением, если короткий; иначе файлом). Кнопки — на последнем.
+    if len(transcript) <= 3500:
+        await cb.message.answer(
+            f"📄 <b>Полный текст:</b>\n\n{transcript}",
+            parse_mode="HTML",
+            reply_markup=result_kb(token),
+        )
+    else:
+        await cb.message.answer_document(
+            as_txt_file("rasshifrovka.txt", transcript),
+            caption="📄 Полный текст",
+            reply_markup=result_kb(token),
+        )
