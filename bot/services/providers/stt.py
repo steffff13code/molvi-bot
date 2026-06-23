@@ -60,7 +60,8 @@ class NexaraSTT:
 
         headers = {"Authorization": f"Bearer {self._key}"}
         files = {"file": (filename, audio_bytes, mime)}
-        data = {"response_format": "verbose_json", "language": "ru"}
+        # json (а не verbose_json) — без посегментных данных, ответ легче/быстрее.
+        data = {"response_format": "json", "language": "ru"}
 
         async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=600) as client:
             resp = await client.post(self._url, headers=headers, files=files, data=data)
