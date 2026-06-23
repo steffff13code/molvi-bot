@@ -143,6 +143,18 @@ async def tariffs(message: types.Message) -> None:
     )
 
 
+@router.callback_query(F.data.startswith("buy:"))
+async def buy_stub(cb: types.CallbackQuery) -> None:
+    # Заглушка: реальная оплата пока не подключена.
+    await cb.answer()
+    if cb.message:
+        await cb.message.answer(
+            "💳 Онлайн-оплата скоро будет доступна.\n\n"
+            "Чтобы купить минуты уже сейчас — напишите нам, и мы откроем доступ. "
+            "А первые 30 минут доступны бесплатно прямо в боте.",
+        )
+
+
 @router.message(F.text == BTN_DEVICE)
 async def buy_device(message: types.Message) -> None:
     await message.answer(

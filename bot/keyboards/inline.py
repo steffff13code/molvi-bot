@@ -47,7 +47,7 @@ def templates_kb(token: str) -> InlineKeyboardMarkup:
 
 
 def result_kb(token: str) -> InlineKeyboardMarkup:
-    """Кнопки под готовым результатом: скачать + сменить шаблон."""
+    """Кнопки под готовым результатом: скачать файлом, получить сообщением, сменить шаблон."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -55,6 +55,7 @@ def result_kb(token: str) -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="📕 PDF", callback_data=f"dl:{token}:pdf"),
                 InlineKeyboardButton(text="📘 DOCX", callback_data=f"dl:{token}:docx"),
             ],
+            [InlineKeyboardButton(text="📩 Получить расшифровку сообщением", callback_data=f"msg:{token}")],
             [InlineKeyboardButton(text="🔁 Сменить шаблон", callback_data=f"chg:{token}")],
         ]
     )
@@ -73,7 +74,11 @@ def website_kb() -> InlineKeyboardMarkup:
 def tariffs_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="💳 Тарифы на сайте", url=settings.landing_url)],
+            [
+                InlineKeyboardButton(text="1 час — 50 ₽", callback_data="buy:1"),
+                InlineKeyboardButton(text="5 часов — 250 ₽", callback_data="buy:5"),
+            ],
+            [InlineKeyboardButton(text="10 часов — 450 ₽", callback_data="buy:10")],
             [InlineKeyboardButton(text="🎙 Расшифровать запись", callback_data="go:transcribe")],
         ]
     )

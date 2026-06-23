@@ -25,7 +25,7 @@ from bot.services.pricing import FREE_MINUTES, paywall_text
 from bot.services.providers import STTQuotaError, get_llm, get_stt
 from bot.services.retry import with_retries
 from bot.services.session_store import session_store
-from bot.utils import as_txt_file, split_telegram_text
+from bot.utils import split_telegram_text
 
 router = Router()
 
@@ -42,6 +42,13 @@ CONSENT_REQUIRED_TEXT = (
     "Перед началом работы подтвердите согласие с документами — нажмите «✅ Подтвердить» "
     "в сообщении ниже. Это нужно один раз."
 )
+
+# Водяной знак, который вставляется в начало КАЖДОЙ расшифровки (файл и сообщение).
+_WATERMARK = "Текст расшифрован МОЛВИ — https://molvi-ai.ru/\n\n"
+
+
+def _watermarked(transcript: str) -> str:
+    return _WATERMARK + transcript
 
 
 def _ext_from_name(name: str | None) -> str:
@@ -144,7 +151,10 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
             return
 
     dur_text = f" ({duration_sec} сек)" if duration_sec else ""
-    status_msg = await message.answer(f"🎧 Принял запись{dur_text}. Распознаю…")
+    status_msg = await message.answer(
+        f"⏳ Принял запись{dur_text}. Идёт расшифровка — подождите, "
+        "это может занять некоторое время…"
+    )
 
     uid = uuid.uuid4().hex
     source_path = str(AUDIO_DIR / f"{uid}_src{_ext_from_name(file_name) or '.mp3'}")
@@ -240,15 +250,33 @@ async def on_download(cb: types.CallbackQuery) -> None:
         return
     await cb.answer("Готовлю файл…")
     try:
-        data, filename = await asyncio.to_thread(build_export, fmt, "Расшифровка", entry.transcript)
+        body = _watermarked(entry.transcript)
+        data, filename = await asyncio.to_thread(build_export, fmt, "Расшифровка МОЛВИ", body)
         await cb.message.answer_document(
             types.BufferedInputFile(data, filename=filename),
-            caption=f"📄 Полный текст ({fmt.upper()})",
+            caption=f"📄 Расшифровка ({fmt.upper()})",
         )
         await log_event(user_id=user.id, type_="export", fmt=fmt)
     except Exception as e:
         logger.exception("Export failed: {e}", e=e)
         await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
+
+
+@router.callback_query(F.data.startswith("msg:"))
+async def on_get_as_message(cb: types.CallbackQuery) -> None:
+    """Полная расшифровка сообщением — только по запросу пользователя."""
+    user = cb.from_user
+    if not user or not cb.message:
+        return
+    token = cb.data.split(":", 1)[1]
+    entry = session_store.get(token, user.id)
+    if not entry:
+        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        return
+    await cb.answer()
+    full = _watermarked(entry.transcript)
+    for part in split_telegram_text(full):
+        await cb.message.answer(part)
 
 
 async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
@@ -289,16 +317,10 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
     for p in parts[1:]:
         await cb.message.answer(p, parse_mode="HTML")
 
-    # 2) Полный текст (сообщением, если короткий; иначе файлом). Кнопки — на последнем.
-    if len(transcript) <= 3500:
-        await cb.message.answer(
-            f"📄 <b>Полный текст:</b>\n\n{transcript}",
-            parse_mode="HTML",
-            reply_markup=result_kb(token),
-        )
-    else:
-        await cb.message.answer_document(
-            as_txt_file("rasshifrovka.txt", transcript),
-            caption="📄 Полный текст",
-            reply_markup=result_kb(token),
-        )
+    # 2) Полную расшифровку НЕ вываливаем в чат — даём кнопки: файлом или сообщением.
+    await cb.message.answer(
+        "📄 <b>Полная расшифровка готова.</b>\n"
+        "Скачайте файлом (TXT / PDF / DOCX) или получите сообщением 👇",
+        parse_mode="HTML",
+        reply_markup=result_kb(token),
+    )
