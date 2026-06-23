@@ -153,7 +153,7 @@ async def buy_device(message: types.Message) -> None:
     )
 
 
-@router.message(Command("stats"))
+@router.message(Command("stats2sstef"))
 async def stats_cmd(message: types.Message) -> None:
     user = message.from_user
     if not user or not settings.admin_id or user.id != settings.admin_id:
