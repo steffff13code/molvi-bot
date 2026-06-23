@@ -75,10 +75,14 @@ def tariffs_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="1 час — 50 ₽", callback_data="buy:1"),
-                InlineKeyboardButton(text="5 часов — 250 ₽", callback_data="buy:5"),
+                InlineKeyboardButton(text="1 ч — 75 ₽", callback_data="buy:1"),
+                InlineKeyboardButton(text="5 ч — 365 ₽", callback_data="buy:5"),
             ],
-            [InlineKeyboardButton(text="10 часов — 450 ₽", callback_data="buy:10")],
+            [
+                InlineKeyboardButton(text="10 ч — 699 ₽", callback_data="buy:10"),
+                InlineKeyboardButton(text="30 ч — 1 799 ₽", callback_data="buy:30"),
+            ],
+            [InlineKeyboardButton(text="🔥 50 ч — 2 499 ₽  (50 ₽/ч)", callback_data="buy:50")],
             [InlineKeyboardButton(text="🎙 Расшифровать запись", callback_data="go:transcribe")],
         ]
     )

@@ -127,13 +127,6 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         file_size = message.document.file_size
         file_name = message.document.file_name
 
-    if file_size is not None and file_size > settings.max_audio_mb * 1024 * 1024:
-        await message.answer(
-            f"Файл слишком большой. Лимит {settings.max_audio_mb} МБ. В следующих версиях поднимем лимит.",
-            reply_markup=main_menu_kb(),
-        )
-        return
-
     if duration_sec is not None and duration_sec > settings.max_duration_sec:
         await message.answer(
             f"Запись слишком длинная. Лимит {settings.max_duration_sec // 60} мин.",

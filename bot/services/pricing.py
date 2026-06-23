@@ -16,29 +16,43 @@ from __future__ import annotations
 from bot.config import settings
 
 FREE_MINUTES: int = settings.free_minutes
-PRICE_PER_HOUR: int = settings.price_per_hour
 
-
-def price_per_minute() -> float:
-    return round(PRICE_PER_HOUR / 60, 2)
+# Пакеты: (часов, цена ₽, ₽/час или None)
+_PACKAGES = [
+    (1,  75,   None),
+    (5,  365,  73),
+    (10, 699,  70),
+    (30, 1799, 60),
+    (50, 2499, 50),
+]
 
 
 def tariffs_text() -> str:
-    return (
-        "💳 <b>Тарифы МОЛВИ</b>\n\n"
-        f"🎁 <b>{FREE_MINUTES} минут — бесплатно</b>, прямо сейчас и без карты.\n\n"
-        f"Дальше — <b>от {PRICE_PER_HOUR} ₽/час</b> записи "
-        f"(≈ {price_per_minute()} ₽/мин).\n\n"
-        "⚡ Час записи расшифровывается за ~3 минуты — вместо 6 часов вручную.\n\n"
-        "Чтобы пополнить минуты — напишите нам. Подробности — на сайте 👇"
-    )
+    lines = [
+        "💳 <b>Тарифы МОЛВИ</b>\n",
+        f"🎁 <b>{FREE_MINUTES} минут — бесплатно</b>, прямо сейчас и без карты.\n",
+        "<b>Платные пакеты:</b>",
+    ]
+    for hours, price, per_h in _PACKAGES:
+        note = f"  <i>({per_h} ₽/ч)</i>" if per_h else ""
+        lines.append(f"• {hours} ч — <b>{price} ₽</b>{note}")
+    lines += [
+        "",
+        "⚡ Час записи расшифровывается за ~3 минуты — вместо 6 часов вручную.",
+        "\nЧтобы купить пакет — выберите ниже или напишите нам.",
+    ]
+    return "\n".join(lines)
 
 
 def paywall_text() -> str:
     return (
         f"🚧 <b>Бесплатный лимит исчерпан</b>\n\n"
         f"Вы использовали бесплатные {FREE_MINUTES} минут расшифровки.\n\n"
-        f"Чтобы продолжить — нужно купить минуты "
-        f"(<b>от {PRICE_PER_HOUR} ₽/час</b>, ≈ {price_per_minute()} ₽/мин).\n\n"
+        "Чтобы продолжить — купите пакет минут:\n"
+        "• 1 ч — <b>75 ₽</b>\n"
+        "• 5 ч — <b>365 ₽</b>  (73 ₽/ч)\n"
+        "• 10 ч — <b>699 ₽</b>  (70 ₽/ч)\n"
+        "• 30 ч — <b>1 799 ₽</b>  (60 ₽/ч)\n"
+        "• 50 ч — <b>2 499 ₽</b>  (50 ₽/ч) 🔥\n\n"
         "Напишите нам, чтобы пополнить пакет — мы поможем."
     )
