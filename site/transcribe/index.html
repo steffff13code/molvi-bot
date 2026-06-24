@@ -55,7 +55,7 @@ tailwind.config = {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "RUB",
-    "description": "Первые 30 минут расшифровки бесплатно"
+    "description": "Первые 60 минут расшифровки бесплатно"
   },
   "aggregateRating": {
     "@type": "AggregateRating",
@@ -77,8 +77,8 @@ tailwind.config = {
   "@type": "FAQPage",
   "mainEntity": [
     {"@type":"Question","name":"Как перевести голосовое из Telegram в текст?","acceptedAnswer":{"@type":"Answer","text":"Перешлите голосовое сообщение в бот МОЛВИ (@molviai_bot) — через пару минут получите готовый текст с пунктуацией. Ничего устанавливать не нужно."}},
-    {"@type":"Question","name":"Как расшифровать аудио бесплатно онлайн?","acceptedAnswer":{"@type":"Answer","text":"Первые 30 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись."}},
-    {"@type":"Question","name":"Сколько стоит расшифровать час аудио?","acceptedAnswer":{"@type":"Answer","text":"От 75 ₽ за 1 час. Пакеты: 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч). Без подписки."}},
+    {"@type":"Question","name":"Как расшифровать аудио бесплатно онлайн?","acceptedAnswer":{"@type":"Answer","text":"Первые 60 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись."}},
+    {"@type":"Question","name":"Сколько стоит расшифровать час аудио?","acceptedAnswer":{"@type":"Answer","text":"От 50 ₽ за 1 час (пакет 50 ч). Пакеты: 1 ч — 75 ₽, 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч)."}},
     {"@type":"Question","name":"Как расшифровать запись с диктофона?","acceptedAnswer":{"@type":"Answer","text":"Отправьте аудиофайл с диктофона (MP3, WAV, M4A и др.) в бот МОЛВИ. Результат — текст с кратким содержанием, можно скачать в TXT, PDF или DOCX."}},
     {"@type":"Question","name":"Безопасно ли загружать конфиденциальные записи?","acceptedAnswer":{"@type":"Answer","text":"Да. Аудиофайл удаляется сразу после расшифровки — мы его не храним. Серверы в России, соответствие 152-ФЗ."}},
     {"@type":"Question","name":"Какие форматы аудио и видео поддерживаются?","acceptedAnswer":{"@type":"Answer","text":"Аудио: MP3, WAV, OGG, M4A, FLAC, AAC, Opus. Видео: MP4, MOV, MKV, WEBM. Голосовые из Telegram и WhatsApp — просто перешлите в бот."}}
@@ -304,14 +304,14 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
     <div class="hero-inner">
       <div class="eyebrow">🎙 Расшифровка в Telegram · без программ</div>
       <h1>Расшифровка аудио в текст онлайн — <span class="gradient-text">транскрибация в Telegram за минуты</span></h1>
-      <p class="hero-sub">Закиньте запись в бот МОЛВИ — получите готовый текст с пунктуацией и кратким содержанием. Без регистрации, без программ, на русском. Первые 30 минут — бесплатно.</p>
+      <p class="hero-sub">Закиньте запись в бот МОЛВИ — получите готовый текст с пунктуацией и кратким содержанием. Без регистрации, без программ, на русском. Первые 60 минут — бесплатно.</p>
       <div class="hero-cta-row">
         <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">Расшифровать аудио бесплатно</a>
       </div>
       <div class="hero-trust">
-        <span>💰 От 75 ₽/час</span>
-        <span>⚡ Час записи за 3 минуты</span>
-        <span>🚫 Без подписки</span>
+        <span>💰 От 50 ₽/час</span>
+        <span>⚡ Час записи за 5 минут</span>
+        <span>🇷🇺 Серверы в России</span>
       </div>
     </div>
   </div>
@@ -461,10 +461,10 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
       <div class="center reveal">
         <div class="eyebrow">Безопасность · 152-ФЗ</div>
         <h2 class="section-title">Ваши данные не покидают Россию</h2>
-        <p class="section-sub section-sub-center">Работаем на технологиях Сбера (SaluteSpeech). Данные обрабатываются на серверах в России, в соответствии с 152-ФЗ. Мы не храним и не используем ваши записи.</p>
+        <p class="section-sub section-sub-center">Работаем на технологиях Сбера (GigaChat). Данные обрабатываются на серверах в России, в соответствии с 152-ФЗ. Мы не храним и не используем ваши записи.</p>
       </div>
       <div class="grid-auto cols-3" style="margin-top:32px">
-        <div class="card reveal"><div class="card-icon">🇷🇺</div><h3>Серверы в России</h3><p>Распознавание SaluteSpeech и обработка GigaChat — внутри РФ.</p></div>
+        <div class="card reveal"><div class="card-icon">🇷🇺</div><h3>Серверы в России</h3><p>Распознавание и саммари на технологиях Сбера (GigaChat) — внутри РФ.</p></div>
         <div class="card reveal delay-1"><div class="card-icon">🗑️</div><h3>Не храним файлы</h3><p>Аудио удаляется после обработки — оно нам не нужно.</p></div>
         <div class="card reveal delay-2"><div class="card-icon">📜</div><h3>Соответствие 152-ФЗ</h3><p>Легально для бизнеса, госсектора и работы с перс. данными.</p></div>
       </div>
@@ -482,7 +482,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
     <div class="price-wrap reveal" style="max-width:980px;margin:0 auto">
       <div class="price-free">
         <div class="eyebrow" style="background:rgba(16,185,129,0.14);border-color:rgba(16,185,129,0.4);color:var(--success)">Бесплатно</div>
-        <div class="big">30 минут</div>
+        <div class="big">60 минут</div>
         <p style="color:var(--text-sec);margin-top:10px">расшифровки бесплатно — попробуйте прямо сейчас. Без карты и регистрации.</p>
         <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" style="margin-top:24px;width:100%" target="_blank" rel="noopener">Начать бесплатно</a>
       </div>
@@ -500,7 +500,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
           <li>✓ 8 шаблонов саммари — протокол, лекция, интервью и др.</li>
           <li>✓ Пунктуация, саммари и экспорт включены</li>
         </ul>
-        <div class="price-value-note">💡 Час записи — от 75 ₽ вместо 6 часов вашей работы.</div>
+        <div class="price-value-note">💡 Час записи — от 50 ₽ вместо 6 часов вашей работы.</div>
       </div>
     </div>
   </div>
@@ -537,7 +537,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
     <div class="reveal">
       <div class="eyebrow eyebrow-center">Готовы попробовать?</div>
       <h2>Расшифруйте первую запись<br><span class="gradient-text">прямо сейчас</span></h2>
-      <p class="section-sub section-sub-center" style="margin:18px auto 32px">Первые 30 минут — бесплатно. Без регистрации и программ.</p>
+      <p class="section-sub section-sub-center" style="margin:18px auto 32px">Первые 60 минут — бесплатно. Без регистрации и программ.</p>
       <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">🎙 Расшифровать аудио бесплатно</a>
     </div>
   </div>
@@ -555,19 +555,16 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
       <a href="/blog/kak-perevesti-golosovoe-v-tekst.html" class="card reveal" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
         <div class="card-icon">🎤</div>
         <h3>Как перевести голосовое из Telegram в текст</h3>
-        <p>Быстрый способ превратить голосовое сообщение в читаемый текст за пару минут.</p>
         <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
       </a>
       <a href="/blog/kak-rasshifrovat-audio-besplatno.html" class="card reveal delay-1" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
         <div class="card-icon">💸</div>
         <h3>Как расшифровать аудио бесплатно</h3>
-        <p>Обзор сервисов транскрибации и как расшифровать запись без оплаты.</p>
         <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
       </a>
       <a href="/blog/chto-takoe-transkribaciya.html" class="card reveal delay-2" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
         <div class="card-icon">📚</div>
         <h3>Что такое транскрибация и зачем она нужна</h3>
-        <p>Объясняем простыми словами, где применяется и как сделать конспект.</p>
         <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
       </a>
     </div>
@@ -584,7 +581,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
       <div class="footer-brand">
         <div class="nav-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></div><span>МОЛВИ</span></div>
         <p>Расшифровка аудио в текст в Telegram. Говорите — мы превратим это в текст. Данные только в России.</p>
-        <div style="margin-top:14px"><span class="comp-badge">152-ФЗ</span><span class="comp-badge">SaluteSpeech</span><span class="comp-badge">GigaChat</span></div>
+        <div style="margin-top:14px"><span class="comp-badge">152-ФЗ</span><span class="comp-badge">GigaChat</span></div>
       </div>
       <div class="footer-links">
         <div class="footer-col">
@@ -602,6 +599,15 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:48px
             <li><a href="https://molvi-ai.ru/">AI-диктофон</a></li>
             <li><a href="/blog/">Блог</a></li>
             <li><a href="https://molvi-ai.ru/">Главный сайт</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Документы</h4>
+          <ul>
+            <li><a href="/legal/privacy/">Политика конфиденциальности</a></li>
+            <li><a href="/legal/terms/">Пользовательское соглашение</a></li>
+            <li><a href="/legal/offer/">Публичная оферта</a></li>
+            <li><a href="/legal/consent/">Согласие на обработку ПДн</a></li>
           </ul>
         </div>
       </div>
@@ -663,10 +669,10 @@ function toggleFaq(qEl){
 }
 const faqData = [
   {q:'Как перевести голосовое из Telegram в текст?',a:'Перешлите голосовое сообщение в бот МОЛВИ (@molviai_bot) — через пару минут получите готовый текст с пунктуацией. Ничего устанавливать не нужно.'},
-  {q:'Как расшифровать аудио бесплатно онлайн?',a:'Первые 30 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись.'},
-  {q:'Сколько стоит расшифровать час аудио?',a:'От 75 ₽ за 1 час. Пакеты: 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч). Без подписки — платите только за то, что используете.'},
+  {q:'Как расшифровать аудио бесплатно онлайн?',a:'Первые 60 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись.'},
+  {q:'Сколько стоит расшифровать час аудио?',a:'От 50 ₽ за 1 час (пакет 50 ч). Пакеты: 1 ч — 75 ₽, 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч).'},
   {q:'Как расшифровать запись с диктофона?',a:'Отправьте аудиофайл с диктофона (MP3, WAV, M4A и др.) в бот МОЛВИ. Поддерживаются записи любой длины. Результат — текст с кратким содержанием, можно скачать файлом TXT, PDF или DOCX.'},
-  {q:'Безопасно ли загружать конфиденциальные записи?',a:'Да. Аудиофайл удаляется сразу после расшифровки — мы его не храним. Распознавание работает на технологиях Сбера (SaluteSpeech), серверы в России, соответствие 152-ФЗ.'},
+  {q:'Безопасно ли загружать конфиденциальные записи?',a:'Да. Аудиофайл удаляется сразу после расшифровки — мы его не храним. Работаем на технологиях Сбера (GigaChat), серверы в России, соответствие 152-ФЗ.'},
   {q:'Какие форматы аудио и видео поддерживаются?',a:'Аудио: MP3, WAV, OGG, M4A, FLAC, AAC, Opus. Видео: MP4, MOV, MKV, WEBM. Голосовые из Telegram и WhatsApp — просто перешлите в бот.'}
 ];
 const faqList = document.getElementById('faqList');
