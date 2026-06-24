@@ -1,0 +1,3338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МОЛВИ — Российский ИИ-диктофон. Данные только в России.</title>
+<meta name="description" content="МОЛВИ — умный диктофон на GigaChat. Транскрибация 99%, протоколы, AmoCRM-интеграция. Дешевле PLAUD. Данные в России.">
+<meta property="og:title" content="МОЛВИ — Говори, мы всё сделаем">
+<meta property="og:description" content="Российский ИИ-диктофон. На 40% дешевле PLAUD. Данные только в России. AmoCRM и Битрикс24 из коробки.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "background": "#080C14",
+        "surface": "#0E1420",
+        "surface-container-low": "#111318",
+        "primary": "#2563EB",
+        "on-surface": "#e2e5ef",
+        "on-surface-variant": "#8B9EC0",
+        "outline": "#72757e",
+        "accent-border": "#1E2D4A",
+      }
+    }
+  }
+}
+</script>
+<style>
+.text-editorial { letter-spacing: -0.04em; }
+.card-glass { background: rgba(14,20,32,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+</style>
+
+<style>
+/* ===========================
+   RESET & BASE
+=========================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden; /* сюда, не на body — иначе ломает position:fixed */
+}
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #080C14;
+  color: #F0F4FF;
+  line-height: 1.7;
+}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+ul { list-style: none; }
+button { cursor: pointer; border: none; background: none; font-family: 'Inter', sans-serif; }
+
+/* ===========================
+   DESIGN TOKENS
+=========================== */
+:root {
+  --bg: #080C14;
+  --surface: #0E1420;
+  --surface-elevated: #141C2E;
+  --border: #1E2D4A;
+  --accent: #2563EB;
+  --accent-glow: #3B82F6;
+  --cyan: #06B6D4;
+  --text: #F0F4FF;
+  --text-sec: #8B9EC0;
+  --text-muted: #64748B;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --radius-pill: 999px;
+}
+
+/* ===========================
+   LIGHT THEME OVERRIDES
+=========================== */
+:root.light {
+  --bg: #F4F6FB;
+  --surface: #FFFFFF;
+  --surface-elevated: #EEF1F8;
+  --border: #D0D8EC;
+  --accent: #2563EB;
+  --accent-glow: #3B82F6;
+  --cyan: #0891B2;
+  --text: #0D1526;
+  --text-sec: #3A4E70;
+  --text-muted: #6B7280;
+  --success: #059669;
+  --warning: #D97706;
+}
+
+/* light — глобальные overrides для элементов с жёстко прописанными цветами */
+:root.light body { background: var(--bg); color: var(--text); }
+:root.light nav.navbar.scrolled {
+  background: rgba(244,246,251,0.92);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+}
+:root.light .hero { background: var(--bg); }
+:root.light .hero-grid-bg {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, rgba(37,99,235,0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37,99,235,0.12) 1px, transparent 1px);
+}
+:root.light .glass {
+  background: rgba(255,255,255,0.85);
+  border-color: var(--border);
+}
+:root.light .card-glass {
+  background: rgba(255,255,255,0.9);
+  border-color: var(--border);
+}
+:root.light .gradient-text {
+  background: linear-gradient(135deg, #1D4ED8, #0891B2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+:root.light .section-pricing,
+:root.light .section-app,
+:root.light .section-business { background: var(--surface); }
+:root.light .section-compare,
+:root.light .section-faq { background: var(--bg); }
+:root.light .compare-table { border-color: var(--border); }
+:root.light .compare-header { background: var(--surface-elevated); }
+:root.light footer { background: var(--surface); }
+
+/* ===========================
+   UTILITY
+=========================== */
+.container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+.section-pad { padding: 100px 0; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid rgba(37,99,235,0.3);
+  color: #60A5FA;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: clamp(2rem, 4.5vw, 3.75rem); /* matches md:text-6xl = 60px — same as features heading */
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--text);
+}
+.section-sub {
+  font-size: 17px;
+  color: var(--text-sec);
+  line-height: 1.7;
+  margin-top: 14px;
+  max-width: 560px;
+}
+.gradient-text {
+  background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px; font-weight: 600;
+  padding: 14px 28px;
+  border-radius: var(--radius-btn);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 0 rgba(37,99,235,0.4);
+  white-space: nowrap;
+}
+.btn-primary:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(37,99,235,0.45);
+}
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent;
+  color: var(--text-sec);
+  font-size: 15px; font-weight: 600;
+  padding: 13px 26px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.btn-secondary:hover { border-color: var(--accent); background: rgba(37,99,235,0.07); color: var(--text); }
+
+/* Glass card */
+.glass {
+  background: rgba(14,20,32,0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.25s, box-shadow 0.25s;
+}
+.glass:hover {
+  border-color: rgba(37,99,235,0.5);
+  transform: translateY(-4px);
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ===========================
+   NAVBAR
+=========================== */
+:root { --nav-h: 68px; }
+
+nav.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0;
+  background: transparent;
+  transition: background 0.35s, border-color 0.35s, backdrop-filter 0.35s, box-shadow 0.35s;
+}
+nav.navbar.scrolled {
+  background: rgba(8,12,20,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+}
+.nav-inner {
+  max-width: 1240px; margin: 0 auto; padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--nav-h);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.nav-logo .logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-logo .logo-icon svg { width: 20px; height: 20px; color: #fff; }
+.nav-logo span { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.nav-links {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.nav-link {
+  color: var(--text-sec); font-size: 14px; font-weight: 500;
+  padding: 8px 14px; border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-width: 0; justify-self: end; }
+.nav-transcribe-btn { padding: 10px 18px; font-size: 14px; }
+@media (max-width: 1080px) { .nav-transcribe-btn { display: none; } }
+.nav-mobile-btn { display: none; color: var(--text-sec); padding: 8px; min-width: 44px; min-height: 44px; justify-content: center; align-items: center; }
+/* Tap target minimum on mobile */
+.btn-primary, .btn-secondary { min-height: 44px; }
+.nav-link { min-height: 44px; display: inline-flex; align-items: center; }
+.faq-question { min-height: 44px; display: flex; align-items: center; }
+.app-tab-btn { min-height: 44px; }
+
+/* ── Theme Switch ─────────────────────────────── */
+.theme-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 72px;
+  height: 36px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.theme-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+/* track */
+.theme-switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  transition: background 0.3s, border-color 0.3s;
+}
+:root.light .theme-switch-track { background: #E8EDF8; border-color: #C5CFDF; }
+
+/* thumb */
+.theme-switch-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 6px rgba(37,99,235,0.5);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+  z-index: 2;
+}
+.theme-switch input:checked ~ .theme-switch-thumb {
+  transform: translateX(36px);
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+
+/* icons */
+.theme-switch-icon {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.2s;
+}
+.theme-switch-sun { left: 9px; color: #fff; }
+.theme-switch-moon { right: 8px; color: var(--text-muted); }
+
+/* checked = dark → moon active, sun dimmed */
+.theme-switch input:checked ~ .theme-switch-icon.theme-switch-sun { opacity: 0.4; }
+.theme-switch input:checked ~ .theme-switch-icon.theme-switch-moon { color: var(--text); opacity: 1; }
+
+/* unchecked = light */
+.theme-switch input:not(:checked) ~ .theme-switch-icon.theme-switch-sun { opacity: 1; color: #fff; }
+.theme-switch input:not(:checked) ~ .theme-switch-icon.theme-switch-moon { opacity: 0.4; }
+
+/* Mobile drawer */
+.mobile-drawer {
+  position: fixed; inset: 0;
+  background: rgba(8,12,20,0.98);
+  z-index: 9999;
+  padding: 24px;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+:root.light .mobile-drawer { background: rgba(244,246,251,0.98); }
+.mobile-drawer.open { transform: translateX(0); }
+.mobile-drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+.mobile-nav { display: flex; flex-direction: column; gap: 4px; }
+.mobile-nav a {
+  color: var(--text-sec); font-size: 20px; font-weight: 600;
+  padding: 16px 8px; border-bottom: 1px solid var(--border);
+  transition: color 0.2s;
+  min-height: 56px; display: flex; align-items: center;
+}
+.mobile-nav a:active { color: var(--accent); }
+
+/* ===========================
+   HERO
+=========================== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; align-items: center;
+  overflow: hidden;
+}
+
+/* Grid background (аналог BGPattern: grid + fade-edges) */
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, rgba(30, 45, 74, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 45, 74, 0.45) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 42%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 42%, #000 0%, transparent 72%);
+}
+
+/* чтобы якоря (#pricing, #features, ...) не прятались под шапкой */
+section { scroll-margin-top: calc(var(--nav-h) + 16px); }
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 1240px; margin: 0 auto; padding: 80px 24px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; align-items: center;
+  width: 100%;
+}
+.hero-content { display: flex; flex-direction: column; }
+.hero-title {
+  font-size: clamp(40px, 5.5vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+.hero-title .line2 { color: var(--accent); }
+.hero-sub {
+  font-size: 17px; color: var(--text-sec);
+  line-height: 1.7; margin-bottom: 36px;
+  max-width: 480px;
+}
+.hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
+.hero-trust {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  font-size: 13px; color: var(--text-muted); font-weight: 500;
+}
+.hero-trust span { display: flex; align-items: center; gap: 6px; }
+.hero-visual {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; height: 520px;
+}
+.device-container {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  transform-style: preserve-3d;
+}
+.device-body {
+  position: relative;
+  width: 200px; height: 360px;
+  background: linear-gradient(160deg, #1a2540 0%, #0d1625 60%, #0a1020 100%);
+  border-radius: 40px;
+  border: 1.5px solid rgba(37,99,235,0.3);
+  box-shadow:
+    0 0 60px rgba(37,99,235,0.2),
+    0 0 120px rgba(37,99,235,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  animation: device-float 4s ease-in-out infinite;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 20px 16px;
+  z-index: 2;
+}
+@keyframes device-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.device-led {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 12px var(--success);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+@keyframes led-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--success); opacity: 1; }
+  50% { box-shadow: 0 0 20px var(--success), 0 0 40px rgba(16,185,129,0.3); opacity: 0.8; }
+}
+.device-screen {
+  width: 100%; flex: 1; margin: 12px 0;
+  background: rgba(8,12,20,0.9);
+  border-radius: 20px; overflow: hidden;
+  border: 1px solid rgba(37,99,235,0.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 14px;
+}
+.wave-bars {
+  display: flex; gap: 3px; align-items: center; height: 40px;
+}
+.wave-bar {
+  width: 4px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--cyan), var(--accent));
+  animation: wave-anim 1.2s ease-in-out infinite;
+}
+.wave-bar:nth-child(1) { animation-delay: 0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.1s; }
+.wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { animation-delay: 0.15s; }
+.wave-bar:nth-child(5) { animation-delay: 0.05s; }
+.wave-bar:nth-child(6) { animation-delay: 0.25s; }
+.wave-bar:nth-child(7) { animation-delay: 0.1s; }
+.wave-bar:nth-child(8) { animation-delay: 0.3s; }
+.wave-bar:nth-child(9) { animation-delay: 0.08s; }
+.wave-bar:nth-child(10) { animation-delay: 0.18s; }
+@keyframes wave-anim {
+  0%, 100% { height: 8px; }
+  50% { height: 32px; }
+}
+.device-timer { font-size: 11px; color: var(--success); font-weight: 700; letter-spacing: 0.1em; }
+.device-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #1D4ED8);
+  box-shadow: 0 0 20px rgba(37,99,235,0.5);
+  display: flex; align-items: center; justify-content: center;
+  animation: btn-pulse 3s ease-in-out infinite;
+}
+@keyframes btn-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(37,99,235,0.5); }
+  50% { box-shadow: 0 0 40px rgba(37,99,235,0.8), 0 0 60px rgba(37,99,235,0.3); }
+}
+.device-btn svg { width: 22px; height: 22px; color: #fff; }
+
+/* Glow rings around device */
+.glow-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(37,99,235,0.15);
+  animation: ring-expand 3s ease-out infinite;
+}
+.glow-ring:nth-child(1) { width: 280px; height: 280px; animation-delay: 0s; }
+.glow-ring:nth-child(2) { width: 360px; height: 360px; animation-delay: 1s; }
+.glow-ring:nth-child(3) { width: 440px; height: 440px; animation-delay: 2s; }
+@keyframes ring-expand {
+  0% { opacity: 0.6; transform: scale(0.95); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* App preview floating card */
+.app-preview {
+  position: absolute; right: -10px; top: 60px;
+  width: 180px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  animation: device-float 4s ease-in-out infinite 1s;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  z-index: 3;
+}
+.app-preview-title { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.app-preview-line { font-size: 11px; color: var(--text-sec); padding: 5px 0; border-bottom: 1px solid var(--border); line-height: 1.4; }
+.app-preview-line:last-child { border-bottom: none; }
+.app-preview-line strong { color: var(--cyan); }
+
+/* Stats card */
+.stats-card {
+  position: absolute; left: -20px; bottom: 80px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  animation: device-float 4s ease-in-out infinite 2s;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  z-index: 3;
+}
+.stats-card-num { font-size: 22px; font-weight: 800; color: var(--accent); }
+.stats-card-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===========================
+   SOCIAL PROOF
+=========================== */
+.section-proof { padding: 64px 0; border-top: 1px solid var(--border); }
+.proof-logos {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 52px;
+}
+.proof-logo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.proof-logo:hover { border-color: rgba(37,99,235,0.4); color: var(--text-sec); }
+.proof-metrics {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 24px; max-width: 720px; margin: 0 auto;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 28px;
+  text-align: center;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.metric-card:hover { border-color: rgba(37,99,235,0.4); transform: translateY(-3px); }
+.metric-num {
+  font-size: 42px; font-weight: 900;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #2563EB, #06B6D4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.metric-label { font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+/* ===========================
+   DEVICE DEMO (3 cards)
+=========================== */
+.section-demo { padding: 100px 0; background: var(--surface); }
+.demo-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 20px; margin-top: 52px;
+}
+.demo-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  cursor: pointer;
+}
+.demo-card:hover { border-color: rgba(37,99,235,0.5); transform: translateY(-6px); }
+.demo-card-visual {
+  height: 200px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px;
+  position: relative; overflow: hidden;
+}
+.demo-card-visual::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: 0.3;
+}
+.demo-card:nth-child(1) .demo-card-visual { background: linear-gradient(135deg, #0d1b3e, #091830); }
+.demo-card:nth-child(1) .demo-card-visual::before { background: radial-gradient(circle at 50% 80%, rgba(37,99,235,0.4), transparent); }
+.demo-card:nth-child(2) .demo-card-visual { background: linear-gradient(135deg, #0d2535, #060f1a); }
+.demo-card:nth-child(2) .demo-card-visual::before { background: radial-gradient(circle at 50% 80%, rgba(6,182,212,0.3), transparent); }
+.demo-card:nth-child(3) .demo-card-visual { background: linear-gradient(135deg, #1a1040, #0d0820); }
+.demo-card:nth-child(3) .demo-card-visual::before { background: radial-gradient(circle at 50% 80%, rgba(124,58,237,0.3), transparent); }
+.demo-card-body { padding: 24px; }
+.demo-card-icon { font-size: 28px; margin-bottom: 12px; }
+.demo-card-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.demo-card-desc { font-size: 14px; color: var(--text-sec); line-height: 1.65; margin-bottom: 16px; }
+.demo-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-tag {
+  background: rgba(37,99,235,0.1);
+  border: 1px solid rgba(37,99,235,0.2);
+  color: #60A5FA;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+}
+
+/* ===========================
+   FEATURES
+=========================== */
+.section-features { padding: 100px 0; }
+.features-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 20px; margin-top: 52px;
+}
+.feature-card {
+  background: rgba(14,20,32,0.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 28px;
+  transition: border-color 0.25s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  backdrop-filter: blur(20px);
+}
+.feature-card:hover {
+  border-color: rgba(37,99,235,0.5);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+.feature-icon {
+  width: 50px; height: 50px;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid rgba(37,99,235,0.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+  font-size: 22px;
+  transition: transform 0.2s;
+}
+.feature-card:hover .feature-icon { transform: scale(1.1); }
+.feature-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.feature-desc { font-size: 14px; color: var(--text-sec); line-height: 1.7; }
+
+/* ===========================
+   CRM SECTION
+=========================== */
+.section-crm { padding: 100px 0; background: var(--surface); }
+.crm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+.crm-steps { display: flex; flex-direction: column; gap: 0; margin-top: 36px; }
+.crm-step {
+  display: flex; gap: 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+}
+.crm-step:hover { background: rgba(37,99,235,0.05); }
+.crm-step-num {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid rgba(37,99,235,0.3);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #60A5FA;
+  margin-top: 2px;
+}
+.crm-step-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.crm-step-desc { font-size: 13px; color: var(--text-sec); line-height: 1.6; }
+.crm-visual {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  position: relative;
+}
+.crm-screen {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.crm-screen-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+.crm-screen-dot { width: 10px; height: 10px; border-radius: 50%; }
+.crm-line {
+  height: 10px; background: var(--border);
+  border-radius: 5px; margin-bottom: 8px;
+}
+.crm-line.highlight { background: rgba(37,99,235,0.3); }
+.crm-line.short { width: 60%; }
+.crm-line.shorter { width: 40%; }
+.crm-badge-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.crm-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 4px 12px; border-radius: var(--radius-pill);
+}
+.crm-badge.amocrm { background: rgba(37,99,235,0.15); color: #60A5FA; border: 1px solid rgba(37,99,235,0.3); }
+.crm-badge.bitrix { background: rgba(6,182,212,0.12); color: var(--cyan); border: 1px solid rgba(6,182,212,0.3); }
+.crm-badge.soon { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ===========================
+   COMPARISON TABLE
+=========================== */
+.section-compare { padding: 100px 0; }
+.compare-table { margin-top: 52px; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.compare-header {
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  background: var(--surface-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.compare-col-header {
+  padding: 18px 24px;
+  font-size: 14px; font-weight: 700;
+  text-align: center;
+}
+.compare-col-header:first-child { text-align: left; color: var(--text-muted); }
+.compare-col-header.ours {
+  background: rgba(37,99,235,0.12);
+  color: #60A5FA;
+  border-left: 1px solid rgba(37,99,235,0.2);
+}
+.compare-col-header.theirs { color: var(--text-muted); border-left: 1px solid var(--border); }
+.compare-row {
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.compare-row:last-child { border-bottom: none; }
+.compare-row:hover { background: rgba(255,255,255,0.02); }
+.compare-cell {
+  padding: 15px 24px;
+  font-size: 14px; text-align: center;
+  display: flex; align-items: center; justify-content: center;
+}
+.compare-cell:first-child { text-align: left; justify-content: flex-start; color: var(--text-sec); font-weight: 500; }
+.compare-cell.ours {
+  background: rgba(37,99,235,0.05);
+  border-left: 1px solid rgba(37,99,235,0.1);
+  color: var(--text); font-weight: 600;
+}
+.compare-cell.theirs { border-left: 1px solid var(--border); color: var(--text-muted); }
+.check-yes { color: var(--success); font-weight: 800; font-size: 16px; }
+.check-no { color: var(--text-muted); font-size: 18px; }
+.check-price-ours { color: #60A5FA; font-weight: 700; }
+.compare-footer {
+  background: rgba(37,99,235,0.07);
+  border-top: 1px solid rgba(37,99,235,0.2);
+  padding: 18px 24px;
+  font-size: 14px; color: var(--text-sec);
+  text-align: center;
+}
+.compare-footer strong { color: var(--accent); }
+
+/* ===========================
+   TEMPLATES
+=========================== */
+.section-templates { padding: 100px 0; background: var(--surface); }
+.template-filters {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin: 36px 0 32px;
+}
+.filter-btn {
+  font-size: 13px; font-weight: 600;
+  padding: 8px 18px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  transition: all 0.2s;
+}
+.filter-btn.active, .filter-btn:hover {
+  background: rgba(37,99,235,0.12);
+  border-color: rgba(37,99,235,0.4);
+  color: #60A5FA;
+}
+.templates-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 18px;
+}
+.template-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  transition: border-color 0.25s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  cursor: pointer;
+}
+.template-card:hover { border-color: rgba(37,99,235,0.5); transform: translateY(-4px); }
+.template-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.template-icon-wrap {
+  width: 46px; height: 46px;
+  background: rgba(37,99,235,0.1);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.template-badge-pill {
+  font-size: 10px; font-weight: 700;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.template-badge-pill.popular { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+.template-badge-pill.unique { background: rgba(37,99,235,0.12); color: #60A5FA; border: 1px solid rgba(37,99,235,0.3); }
+.template-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.template-preview {
+  font-size: 12px; color: var(--text-muted);
+  line-height: 1.6; position: relative;
+}
+.template-preview::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: linear-gradient(transparent, var(--bg));
+}
+
+/* ===========================
+   APP SECTION
+=========================== */
+.section-app { padding: 100px 0; }
+.app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+.app-tabs-nav {
+  display: flex; gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  margin: 32px 0 28px;
+  width: fit-content;
+}
+.app-tab-btn {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-muted);
+  padding: 9px 20px;
+  border-radius: var(--radius-pill);
+  transition: all 0.25s;
+}
+.app-tab-btn.active { background: var(--accent); color: #fff; }
+.app-tabs-container { position: relative; min-height: 200px; }
+.app-tab-content {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  pointer-events: none;
+}
+.app-tab-content.active {
+  opacity: 1;
+  visibility: visible;
+  position: relative;
+  pointer-events: auto;
+}
+.app-tab-content h3 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.app-tab-content p { font-size: 15px; color: var(--text-sec); line-height: 1.7; margin-bottom: 20px; }
+.app-feature-list { display: flex; flex-direction: column; gap: 10px; }
+.app-feature-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-sec); }
+.app-feature-item::before { content: '✓'; color: var(--success); font-weight: 800; flex-shrink: 0; }
+.phone-mockup {
+  width: 260px; margin: 0 auto;
+  background: var(--surface-elevated);
+  border: 2px solid var(--border);
+  border-radius: 40px;
+  padding: 20px 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px rgba(37,99,235,0.15);
+  position: relative;
+}
+.phone-notch {
+  width: 80px; height: 24px;
+  background: var(--bg);
+  border-radius: 12px;
+  margin: 0 auto 16px;
+}
+.phone-screen {
+  background: var(--bg);
+  border-radius: 24px;
+  min-height: 380px;
+  overflow: hidden;
+  position: relative;
+}
+/* Recording screen */
+.rec-screen { padding: 24px; display: flex; flex-direction: column; align-items: center; }
+.rec-status { font-size: 11px; font-weight: 700; color: var(--success); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
+.rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: led-pulse 1.5s ease-in-out infinite; }
+.rec-timer { font-size: 36px; font-weight: 900; color: var(--text); letter-spacing: -1px; margin-bottom: 20px; }
+.rec-waves { display: flex; gap: 3px; align-items: center; height: 50px; margin-bottom: 24px; }
+.rec-wave-bar {
+  width: 3px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--cyan), var(--accent));
+  animation: wave-anim 1.5s ease-in-out infinite;
+}
+.rec-btn {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #1D4ED8);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 30px rgba(37,99,235,0.6);
+}
+/* Result screen */
+.result-screen { padding: 20px; }
+.result-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.result-summary { font-size: 11px; color: var(--text-sec); line-height: 1.7; margin-bottom: 14px; }
+.result-task { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-sec); margin-bottom: 6px; }
+.result-check { color: var(--success); font-weight: 800; margin-top: 1px; }
+.result-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+.result-btn { font-size: 10px; font-weight: 600; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); color: var(--text-sec); }
+.result-btn.primary { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.3); color: #60A5FA; }
+/* CRM screen */
+.crm-screen-ph { padding: 16px; }
+.crm-header-bar { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.crm-card-item { background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+.crm-card-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.crm-card-badge { font-size: 10px; font-weight: 600; color: var(--success); background: rgba(16,185,129,0.1); border-radius: 4px; padding: 2px 6px; display: inline-block; margin-bottom: 6px; }
+.crm-card-line { font-size: 10px; color: var(--text-muted); }
+
+.app-store-badges { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.store-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+}
+.store-badge:hover {
+  border-color: rgba(37, 99, 235, 0.45);
+  background: var(--surface-elevated);
+  box-shadow: 0 0 24px rgba(37, 99, 235, 0.12);
+}
+.store-badge-svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--text);
+}
+.store-badge-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding-right: 6px;
+  text-align: left;
+}
+.store-badge-caption {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--text-sec);
+  text-transform: none;
+}
+.store-badge-caption--caps { text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.store-badge-title {
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 3px;
+}
+
+/* ===========================
+   PRICING
+=========================== */
+.section-pricing { padding: 100px 0; background: var(--surface); }
+.section-pricing .section-title { margin-bottom: 28px; }
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 20px; margin-top: 8px;
+}
+.price-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), border-color 0.25s;
+}
+.price-card:hover { transform: translateY(-4px); }
+.price-card.popular {
+  border-color: rgba(37,99,235,0.4);
+  transform: scale(1.02);
+  box-shadow: 0 0 0 1px rgba(37,99,235,0.2), 0 20px 60px rgba(37,99,235,0.15);
+  background: var(--surface);
+}
+.price-card.popular:hover { transform: scale(1.02) translateY(-4px); }
+.price-popular-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--warning);
+  color: #000;
+  font-size: 11px; font-weight: 800;
+  padding: 4px 16px; border-radius: var(--radius-pill);
+  letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap;
+}
+.price-plan-name { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+.price-amount {
+  font-size: 44px; font-weight: 900;
+  letter-spacing: -0.03em; color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.price-amount .currency { font-size: 20px; font-weight: 700; color: var(--text-sec); vertical-align: top; margin-top: 8px; display: inline-block; }
+.price-amount .period { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+.price-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.price-divider { height: 1px; background: var(--border); margin: 20px 0; }
+.price-feature-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.price-feature { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-sec); }
+.price-feature.yes::before { content: '✓'; color: var(--success); font-weight: 800; flex-shrink: 0; }
+.price-feature.no { color: var(--text-muted); }
+.price-feature.no::before { content: '✗'; color: var(--text-muted); font-weight: 800; flex-shrink: 0; }
+.price-compare { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 10px; }
+.price-compare strong { color: var(--success); }
+.pricing-enterprise {
+  margin-top: 36px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 20px;
+}
+.enterprise-info h4 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.enterprise-info p { font-size: 14px; color: var(--text-sec); }
+.enterprise-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.enterprise-tag { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: var(--radius-pill); background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60A5FA; }
+
+/* ===========================
+   BUSINESS
+=========================== */
+.section-business { padding: 100px 0; background: var(--surface); }
+.business-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 52px; }
+.business-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  transition: border-color 0.25s, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.business-card:hover { border-color: rgba(37,99,235,0.5); transform: translateY(-5px); }
+.business-card-icon { font-size: 36px; margin-bottom: 18px; }
+.business-card-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+.business-card-list { display: flex; flex-direction: column; gap: 8px; }
+.business-card-list li { font-size: 14px; color: var(--text-sec); display: flex; gap: 8px; }
+.business-card-list li::before { content: '·'; color: var(--accent); font-weight: 900; flex-shrink: 0; }
+.business-cta { text-align: center; margin-top: 52px; }
+.business-cta-sub { font-size: 14px; color: var(--text-muted); margin-top: 12px; }
+
+/* ===========================
+   FAQ
+=========================== */
+.section-faq { padding: 100px 0; }
+.faq-list { max-width: 760px; margin: 52px auto 0; display: flex; flex-direction: column; gap: 2px; }
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.faq-item.open { border-color: rgba(37,99,235,0.4); }
+.faq-question {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 24px;
+  cursor: pointer;
+  font-size: 15px; font-weight: 600; color: var(--text);
+  user-select: none;
+  transition: color 0.2s;
+}
+.faq-question:hover { color: #60A5FA; }
+.faq-arrow {
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  min-width: 44px;
+  background: rgba(37,99,235,0.1);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s, background 0.2s;
+}
+.faq-item.open .faq-arrow { transform: rotate(180deg); background: rgba(37,99,235,0.2); }
+.faq-answer {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), padding 0.3s;
+  padding: 0 24px;
+  font-size: 14px; color: var(--text-sec); line-height: 1.75;
+}
+.faq-item.open .faq-answer { max-height: 300px; padding-bottom: 20px; }
+
+/* ===========================
+   FINAL CTA
+=========================== */
+.section-final-cta {
+  position: relative;
+  padding: 120px 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--bg) 0%, #060a14 50%, var(--bg) 100%);
+}
+.final-cta-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px; height: 500px;
+  background: radial-gradient(ellipse, rgba(37,99,235,0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.final-cta-inner { position: relative; z-index: 1; text-align: center; }
+.final-cta-title {
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 800; letter-spacing: -0.03em;
+  color: var(--text); margin-bottom: 18px;
+}
+.final-cta-sub { font-size: 18px; color: var(--text-sec); margin-bottom: 40px; }
+.final-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn-primary-lg {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--accent);
+  color: #fff; font-size: 16px; font-weight: 700;
+  padding: 18px 36px; border-radius: var(--radius-btn);
+  animation: cta-glow-pulse 2.5s ease-in-out infinite;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-primary-lg:hover { background: #1D4ED8; transform: translateY(-2px); }
+@keyframes cta-glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(37,99,235,0.4); }
+  50% { box-shadow: 0 0 50px rgba(37,99,235,0.7), 0 0 80px rgba(37,99,235,0.2); }
+}
+.final-trust {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 20px;
+  margin-top: 32px;
+  font-size: 13px; color: var(--text-muted); font-weight: 500;
+}
+.final-trust span { display: flex; align-items: center; gap: 6px; }
+
+/* ===========================
+   FOOTER
+=========================== */
+footer {
+  background: #060910;
+  border-top: 1px solid var(--border);
+  padding: 64px 0 32px;
+}
+.footer-top {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 40px; padding-bottom: 52px;
+  border-bottom: 1px solid var(--border);
+}
+.footer-brand-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.footer-brand-logo .logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.footer-brand-logo span { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.footer-brand-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; max-width: 240px; }
+.footer-compliance {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.comp-badge {
+  font-size: 10px; font-weight: 700;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  background: rgba(37,99,235,0.1);
+  border: 1px solid rgba(37,99,235,0.2);
+  color: #60A5FA;
+}
+.footer-col h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 18px; text-transform: uppercase; letter-spacing: 0.06em; }
+.footer-col ul { display: flex; flex-direction: column; gap: 10px; }
+.footer-col ul li a { font-size: 13px; color: var(--text-muted); transition: color 0.2s; }
+.footer-col ul li a:hover { color: var(--text-sec); }
+.footer-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 28px;
+  flex-wrap: wrap; gap: 16px;
+  font-size: 12px; color: var(--text-muted);
+}
+.footer-social { display: flex; gap: 10px; }
+.social-btn {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.social-btn:hover { border-color: rgba(37,99,235,0.4); background: rgba(37,99,235,0.08); }
+
+/* ===========================
+   ACCESSIBILITY
+=========================== */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.faq-question { width: 100%; text-align: left; }
+
+/* ===========================
+   EXTRACTED UTILITY CLASSES
+=========================== */
+/* Navbar buy button */
+.nav-buy-btn { padding: 10px 20px; font-size: 14px; box-shadow: 0 0 20px rgba(37,99,235,0.3); }
+
+/* Mobile drawer */
+.drawer-close-btn {
+  color: var(--text-sec); padding: 8px;
+  min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; transition: color 0.2s, background 0.2s;
+}
+.drawer-close-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.drawer-theme-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 8px; border-top: 1px solid var(--border); margin-top: 24px;
+  font-size: 14px; font-weight: 500; color: var(--text-sec);
+}
+.drawer-cta-wrap { margin-top: auto; padding-top: 32px; }
+.drawer-buy-btn {
+  display: block; text-align: center; font-size: 16px;
+  padding: 16px; border-radius: 14px; box-shadow: 0 0 30px rgba(37,99,235,0.4);
+}
+
+/* Hero CTAs */
+.hero-cta-primary { font-size: 15px; padding: 16px 32px; box-shadow: 0 0 32px rgba(37,99,235,0.45); }
+.hero-cta-secondary { font-size: 15px; padding: 15px 28px; }
+
+/* App preview badges */
+.app-preview-badges { margin-top: 10px; display: flex; gap: 6px; }
+.app-preview-badge {
+  font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-pill);
+  background: rgba(37,99,235,0.15); color: #60A5FA; border: 1px solid rgba(37,99,235,0.3);
+}
+
+/* Section-sub centered variant */
+.section-sub-center { margin: 14px auto 0; text-align: center; }
+
+/* Phone mockup wrapper */
+.phone-wrap { display: flex; justify-content: center; align-items: center; }
+
+/* App section free tier note */
+.app-free-note { font-size: 13px; color: var(--text-muted); margin-top: 12px; }
+
+/* Pricing */
+.price-plan-name-accent { color: #60A5FA; }
+.price-card-cta { width: 100%; justify-content: center; font-size: 15px; }
+.price-card-cta.popular-shadow { box-shadow: 0 0 24px rgba(37,99,235,0.4); }
+
+/* Reveal delays */
+.reveal.delay-1 { transition-delay: 0.1s; }
+.reveal.delay-2 { transition-delay: 0.2s; }
+
+/* Eyebrow centered */
+.eyebrow-center { justify-content: center; display: inline-flex; margin-bottom: 20px; }
+
+/* Footer */
+.footer-social-wrap { margin-top: 24px; }
+.footer-links-row { display: flex; gap: 16px; }
+.footer-link-text { color: var(--text-muted); font-size: 12px; transition: color 0.2s; }
+.footer-link-text:hover { color: var(--text-sec); }
+
+/* Final CTA secondary button sizing */
+.btn-secondary-lg { font-size: 16px; padding: 17px 28px; }
+
+/* Enterprise CTA */
+.enterprise-cta { flex-shrink: 0; }
+/* Business CTA */
+.business-cta-btn { font-size: 16px; padding: 16px 36px; box-shadow: 0 0 32px rgba(37,99,235,0.35); }
+
+/* ===========================
+   COMPARE — MOBILE CARDS
+=========================== */
+.compare-cards { display: none; margin-top: 28px; }
+.compare-mobile-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-card); padding: 18px; margin-bottom: 10px;
+}
+.compare-mobile-card-title {
+  font-size: 14px; font-weight: 600; color: var(--text-sec);
+  margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.compare-mobile-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; font-size: 13px;
+}
+.compare-mobile-row:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.compare-mobile-brand { display: flex; align-items: center; gap: 8px; }
+.compare-mobile-logo {
+  font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: var(--radius-pill); flex-shrink: 0;
+}
+.compare-mobile-logo.ours { background: rgba(37,99,235,0.15); color: #60A5FA; border: 1px solid rgba(37,99,235,0.2); }
+.compare-mobile-logo.theirs { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
+.compare-mobile-val { font-size: 13px; font-weight: 600; color: var(--text-sec); }
+.compare-mobile-val.good { color: var(--success); }
+.compare-mobile-val.bad { color: var(--text-muted); }
+
+/* ===========================
+   WAVE BARS — CSS ANIMATION DELAYS
+=========================== */
+.wave-bar:nth-child(1)  { animation-delay: 0s; }
+.wave-bar:nth-child(2)  { animation-delay: 0.08s; }
+.wave-bar:nth-child(3)  { animation-delay: 0.16s; }
+.wave-bar:nth-child(4)  { animation-delay: 0.24s; }
+.wave-bar:nth-child(5)  { animation-delay: 0.12s; }
+.wave-bar:nth-child(6)  { animation-delay: 0.32s; }
+.wave-bar:nth-child(7)  { animation-delay: 0.20s; }
+.wave-bar:nth-child(8)  { animation-delay: 0.04s; }
+.wave-bar:nth-child(9)  { animation-delay: 0.28s; }
+.wave-bar:nth-child(10) { animation-delay: 0.10s; }
+.rec-wave-bar:nth-child(1)  { animation-delay: 0s; }
+.rec-wave-bar:nth-child(2)  { animation-delay: 0.06s; }
+.rec-wave-bar:nth-child(3)  { animation-delay: 0.12s; }
+.rec-wave-bar:nth-child(4)  { animation-delay: 0.18s; }
+.rec-wave-bar:nth-child(5)  { animation-delay: 0.24s; }
+.rec-wave-bar:nth-child(6)  { animation-delay: 0.10s; }
+.rec-wave-bar:nth-child(7)  { animation-delay: 0.30s; }
+.rec-wave-bar:nth-child(8)  { animation-delay: 0.08s; }
+.rec-wave-bar:nth-child(9)  { animation-delay: 0.22s; }
+.rec-wave-bar:nth-child(10) { animation-delay: 0.16s; }
+.rec-wave-bar:nth-child(11) { animation-delay: 0.04s; }
+.rec-wave-bar:nth-child(12) { animation-delay: 0.28s; }
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+/* ===========================
+   RESPONSIVE — TABLET (≤1024px)
+=========================== */
+@media (max-width: 1024px) {
+  .features-grid   { grid-template-columns: repeat(2,1fr); }
+  .footer-top      { grid-template-columns: 1fr 1fr; }
+  .hero-inner      { grid-template-columns: 1fr; gap: 40px; text-align: center; padding: 90px 24px 60px; }
+  .hero-sub        { margin: 0 auto 36px; }
+  .hero-ctas       { justify-content: center; }
+  .hero-trust      { justify-content: center; }
+  .hero-visual     { height: 380px; }
+  .app-grid        { grid-template-columns: 1fr; gap: 48px; }
+  .crm-grid        { grid-template-columns: 1fr; gap: 48px; }
+  .app-preview, .stats-card { display: none; }
+}
+
+/* ===========================
+   RESPONSIVE — MOBILE (≤768px)
+=========================== */
+@media (max-width: 768px) {
+  /* ---------- Navbar ---------- */
+  .nav-links { display: none; }
+  .nav-mobile-btn { display: flex; }
+  .nav-inner { padding: 0 16px; }
+  /* Hide theme switch from top nav — it lives in the drawer on mobile */
+  .nav-actions .theme-switch { display: none; }
+  .theme-switch { width: 56px; height: 30px; }
+  .theme-switch-thumb { width: 20px; height: 20px; top: 4px; left: 4px; }
+  .theme-switch input:checked ~ .theme-switch-thumb { transform: translateX(26px); }
+
+  /* ---------- Hero ---------- */
+  .hero { min-height: auto; }
+  .hero-inner  { padding: 80px 16px 56px; gap: 28px; }
+  .hero-title  { font-size: clamp(30px, 8vw, 46px); }
+  .hero-sub    { font-size: 15px; max-width: 100%; }
+  .hero-ctas   { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-secondary { width: 100%; justify-content: center; padding: 14px 20px; }
+  .hero-trust  { font-size: 12px; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .hero-visual { height: 260px; }
+  .device-body { width: 148px; height: 268px; border-radius: 32px; }
+  .glow-ring:nth-child(1) { width: 180px; height: 180px; }
+  .glow-ring:nth-child(2) { width: 240px; height: 240px; }
+  .glow-ring:nth-child(3) { width: 300px; height: 300px; }
+  .app-preview, .stats-card { display: none !important; }
+
+  /* ---------- Section padding ---------- */
+  .section-pad      { padding: 56px 0; }
+  .section-proof    { padding: 44px 0; }
+  .section-demo     { padding: 56px 0; }
+  .section-features { padding: 56px 0; }
+  .section-crm      { padding: 56px 0; }
+  .section-compare  { padding: 56px 0; }
+  .section-templates{ padding: 56px 0; }
+  .section-app      { padding: 56px 0; }
+  .section-pricing  { padding: 56px 0; }
+  .section-business { padding: 56px 0; }
+  .section-faq      { padding: 56px 0; }
+
+  /* Tailwind py-32 → ~48px on mobile */
+  .py-32 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+  /* Tailwind gap-24 in flex rows → reduce */
+  .gap-24 { gap: 2rem !important; }
+  .mb-12  { margin-bottom: 2rem !important; }
+  .mb-24  { margin-bottom: 2.5rem !important; }
+
+  /* ---------- Typography headings ---------- */
+  .section-title   { font-size: clamp(1.7rem, 7vw, 2.4rem) !important; }
+  .scenarios-title { font-size: clamp(1.7rem, 7vw, 2.4rem) !important; }
+  .scenarios-sub   { font-size: 15px; }
+  /* Tailwind big heading overrides */
+  .text-5xl { font-size: 2.5rem !important; }
+  .md\:text-8xl { font-size: 2.8rem !important; }
+  .md\:text-7xl { font-size: 2.4rem !important; }
+
+  /* ---------- Grids ---------- */
+  .demo-grid       { grid-template-columns: 1fr; }
+  .features-grid   { grid-template-columns: 1fr; }
+  .templates-grid  { grid-template-columns: repeat(2,1fr); }
+  .pricing-grid    { grid-template-columns: 1fr; }
+  .business-grid   { grid-template-columns: 1fr; }
+  .footer-top      { grid-template-columns: 1fr; gap: 36px; }
+  .proof-metrics   { grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+  /* ---------- Comparison table ---------- */
+  .section-compare .container,
+  .section-compare .max-w-5xl { padding-left: 0 !important; padding-right: 0 !important; }
+  .compare-table   { overflow-x: auto; border-radius: 12px; }
+  .compare-header, .compare-row { font-size: 12px; min-width: 480px; }
+  .compare-cell    { padding: 10px 12px; }
+  /* Tailwind comparison table */
+  .overflow-x-auto table { min-width: 480px; }
+
+  /* ---------- Scenarios carousel ---------- */
+  .scenarios-section    { padding: 56px 0; }
+  .scenarios-container  { padding: 0 16px; }
+  .sc-card              { padding: 24px; border-radius: 2rem; }
+  .sc-title             { font-size: 20px; }
+  .sc-text              { font-size: 14px; margin-bottom: 16px; }
+  .sc-icon              { font-size: 36px; margin-bottom: 16px; }
+  .sc-btn               { width: 40px; height: 40px; }
+
+  /* ---------- Features bento (Tailwind) ---------- */
+  .md\:col-span-2 { grid-column: span 1 !important; }
+  .md\:col-span-3 { grid-column: span 1 !important; }
+  .grid-cols-1.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+
+  /* ---------- App section (Tailwind) ---------- */
+  .lg\:flex-row { flex-direction: column !important; }
+  .phone-mockup  { width: 220px; }
+  .app-tabs-nav  { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .app-tab-btn   { font-size: 12px; padding: 8px 14px; }
+  .store-badges  { gap: 10px; }
+
+  /* ---------- Metrics ---------- */
+  .metric-num   { font-size: 34px; }
+  .metric-card  { padding: 20px 16px; }
+
+  /* ---------- Feature cards ---------- */
+  .feature-card { padding: 22px; }
+
+  /* ---------- Price cards ---------- */
+  .price-card       { padding: 28px 22px; }
+  .price-card.popular { transform: none; }
+
+  /* ---------- FAQ ---------- */
+  .faq-question { font-size: 15px; }
+  .faq-item     { padding: 18px 0; }
+
+  /* ---------- Footer ---------- */
+  .footer-top       { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .footer-logo-area { text-align: left; }
+  .footer-bottom    { flex-direction: column; gap: 12px; text-align: center; }
+
+  /* ---------- Compare table → cards on mobile ---------- */
+  .compare-table  { display: none; }
+  .compare-cards  { display: block; }
+}
+
+/* ===========================
+   RESPONSIVE — SMALL MOBILE (≤480px)
+=========================== */
+@media (max-width: 480px) {
+  .templates-grid  { grid-template-columns: 1fr; }
+  .template-card   { min-width: 0; }
+  /* Proof metrics — single column at very small viewports */
+  .proof-metrics   { grid-template-columns: 1fr; gap: 12px; max-width: 320px; }
+  .metric-num      { font-size: 36px; }
+  .metric-card     { padding: 20px 24px; text-align: left; display: flex; align-items: center; gap: 16px; }
+  .metric-label    { font-size: 13px; margin-top: 0; }
+
+  .hero-inner  { padding: 72px 14px 48px; }
+  .hero-title  { font-size: clamp(26px, 9vw, 36px); }
+  .hero-visual { height: 220px; }
+  .device-body { width: 126px; height: 228px; }
+  .wave-bars   { height: 28px; }
+
+  .section-title   { font-size: clamp(1.5rem, 8vw, 2rem) !important; }
+  .scenarios-title { font-size: clamp(1.5rem, 8vw, 2rem) !important; }
+
+  .sc-card   { padding: 18px; border-radius: 1.5rem; }
+  .sc-title  { font-size: 18px; }
+  .sc-text   { font-size: 13px; }
+
+  /* Tailwind glass cards — reduce padding */
+  .p-12 { padding: 1.5rem !important; }
+  .p-10 { padding: 1.25rem !important; }
+  .p-8  { padding: 1rem !important; }
+  .rounded-\[2\.5rem\] { border-radius: 1.5rem !important; }
+  .rounded-\[3rem\]    { border-radius: 1.75rem !important; }
+  .rounded-\[4rem\]    { border-radius: 2rem !important; }
+
+  /* Tailwind comparison table */
+  .overflow-x-auto table { min-width: 380px; }
+  .compare-cell    { padding: 9px 8px; }
+  .compare-header, .compare-row { font-size: 11px; }
+
+  /* CTA button - full width */
+  .py-32.px-6 .rounded-full { display: block; width: 100%; max-width: 280px; margin: 0 auto; }
+
+  /* Phone mockup */
+  .phone-mockup    { width: 190px; }
+  .w-80            { width: 14rem !important; }
+  .h-\[640px\]     { height: 26rem !important; }
+
+  .footer-top { gap: 28px; }
+
+  /* Pricing - ensure single column */
+  .pricing-grid   { grid-template-columns: 1fr; gap: 16px; }
+}
+
+/* ===========================
+   TOUCH — disable sticky hover states
+=========================== */
+@media (hover: none) {
+  .glass:hover,
+  .card-glass:hover,
+  .feature-card:hover,
+  .demo-card:hover,
+  .metric-card:hover,
+  .template-card:hover,
+  .price-card:hover,
+  .sc-card:hover { transform: none; box-shadow: none; }
+  .glow-button:hover { transform: none; }
+}
+
+/* ===========================
+   SCENARIOS CAROUSEL
+=========================== */
+.scenarios-section {
+  padding: 100px 0;
+  background: var(--bg);
+  overflow: hidden;
+}
+.scenarios-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.scenarios-title {
+  font-size: clamp(2rem, 4.5vw, 3.75rem); /* matches md:text-6xl = 60px */
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.scenarios-accent { color: var(--accent); font-style: italic; }
+.scenarios-sub {
+  font-size: 18px;
+  color: var(--text-sec);
+  max-width: 560px;
+  margin: 0 auto;
+}
+.scenarios-carousel-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.scenarios-viewport {
+  flex: 1;
+  overflow: hidden;
+}
+.scenarios-track {
+  display: flex;
+  gap: 24px;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.sc-card {
+  flex-shrink: 0;
+  /* (100% - 2 gaps - 40px peek) / 3 — shows start of 4th card on right */
+  width: calc((100% - 88px) / 3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3rem;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+}
+.sc-card:hover {
+  border-color: rgba(37,99,235,0.5);
+  box-shadow: 0 12px 48px rgba(37,99,235,0.1);
+  transform: translateY(-4px);
+}
+.sc-icon {
+  font-size: 44px;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+.sc-title {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 14px;
+  line-height: 1.15;
+}
+.sc-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-sec);
+  flex-grow: 1;
+  margin-bottom: 24px;
+}
+.sc-img-wrap {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  aspect-ratio: 4/3;
+}
+.sc-img-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s ease;
+}
+.sc-card:hover .sc-img-wrap img { transform: scale(1.05); }
+
+/* right-edge gradient hint — shows user there's more to scroll */
+.scenarios-carousel-wrap {
+  position: relative;
+}
+.scenarios-carousel-wrap::after {
+  content: '';
+  position: absolute;
+  right: 64px; /* sits over viewport right edge, before the next-button */
+  top: 0; bottom: 0;
+  width: 72px;
+  background: linear-gradient(to right, transparent, var(--bg) 85%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* nav buttons */
+.sc-btn {
+  flex-shrink: 0;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.sc-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(37,99,235,0.4);
+}
+.sc-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* dots */
+.sc-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+.sc-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.sc-dot.active {
+  background: var(--accent);
+  transform: scale(1.35);
+}
+
+/* responsive */
+@media (max-width: 1024px) {
+  /* 2 cards + 1 gap + 40px peek */
+  .sc-card { width: calc((100% - 64px) / 2); }
+}
+@media (max-width: 640px) {
+  /* 1 card + 32px peek on right */
+  .sc-card { width: calc(100% - 32px); }
+  .sc-btn { display: none; }
+  .scenarios-carousel-wrap::after { right: 0; width: 48px; }
+}
+
+/* light theme overrides for carousel */
+:root.light .sc-card {
+  background: #fff;
+  border-color: var(--border);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+:root.light .sc-card:hover {
+  border-color: rgba(37,99,235,0.4);
+  box-shadow: 0 12px 48px rgba(37,99,235,0.12);
+}
+:root.light .sc-btn {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--text);
+}
+:root.light .sc-img-wrap { border-color: var(--border); }
+
+/* ===========================
+   LIGHT THEME — GLOBAL FIXES
+=========================== */
+/* Tailwind bg-background / bg-[#080C14] used in social proof & device demo sections */
+:root.light .bg-\[\#080C14\] { background: var(--bg) !important; }
+:root.light .bg-background { background: var(--bg) !important; }
+:root.light .bg-surface-container-low\/20 { background: rgba(37,99,235,0.03) !important; }
+
+/* Text overrides — Tailwind classes that hardcode white */
+:root.light .text-white { color: var(--text) !important; }
+:root.light .text-on-surface-variant { color: var(--text-sec) !important; }
+:root.light .text-on-surface { color: var(--text) !important; }
+:root.light .text-outline\/40, :root.light .text-outline\/60 { color: var(--text-muted) !important; }
+:root.light .text-slate-400 { color: var(--text-sec) !important; }
+:root.light .text-slate-500 { color: var(--text-sec) !important; }
+:root.light .text-slate-700 { color: var(--text-muted) !important; }
+
+/* borders */
+:root.light .border-white\/5 { border-color: var(--border) !important; }
+:root.light .border-white\/10 { border-color: var(--border) !important; }
+:root.light .border-y.border-white\/5 { border-color: var(--border) !important; }
+:root.light .divide-white\/5 > * + * { border-color: var(--border) !important; }
+:root.light .border-accent-border\/50 { border-color: var(--border) !important; }
+:root.light .border-t.border-white\/5 { border-color: var(--border) !important; }
+
+/* Backgrounds of cards in Tailwind sections */
+:root.light .bg-white\/5 { background: rgba(37,99,235,0.06) !important; }
+:root.light .bg-white\/10 { background: rgba(37,99,235,0.1) !important; }
+:root.light .hover\:bg-white\/5:hover { background: rgba(37,99,235,0.08) !important; }
+
+/* Table */
+:root.light .hover\:bg-white\/2:hover { background: rgba(37,99,235,0.04) !important; }
+:root.light table td, :root.light table th { color: var(--text) !important; }
+
+/* Device mockup inside app section */
+:root.light .bg-\[\#171a1f\] { background: #f0f4fb !important; }
+
+/* Glass and card-glass global */
+:root.light .glass {
+  background: rgba(255,255,255,0.92) !important;
+  border-color: var(--border) !important;
+}
+:root.light .card-glass {
+  background: rgba(255,255,255,0.95) !important;
+  border-color: var(--border) !important;
+}
+
+/* Gradient heading text in features section */
+:root.light .from-\[\#1E2D4A\]\/20 { --tw-gradient-from: rgba(37,99,235,0.08) !important; }
+
+/* Pricing section buttons */
+:root.light .border-white\/10.font-black { border-color: var(--border) !important; color: var(--text) !important; }
+
+/* Final CTA section */
+:root.light .from-primary\/20 { --tw-gradient-from: rgba(37,99,235,0.12) !important; }
+
+/* Mobile navbar bg */
+:root.light .bg-\[\#080C14\]\/80 { background: rgba(244,246,251,0.92) !important; }
+
+/* App store buttons in app section */
+:root.light .store-badge { background: var(--surface-elevated) !important; border-color: var(--border) !important; }
+:root.light .store-badge-caption--caps, :root.light .store-badge-caption { color: var(--text-muted) !important; }
+:root.light .store-badge-title { color: var(--text) !important; }
+
+/* ===========================
+   SOCIAL PROOF — HEADING
+=========================== */
+.proof-heading {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+/* ===========================
+   TESTIMONIALS
+=========================== */
+.section-testimonials { padding: 100px 0; background: var(--surface); }
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 24px;
+  margin-top: 52px;
+}
+.testimonial-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s;
+}
+.testimonial-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 0% 0%, rgba(37,99,235,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.testimonial-card:hover {
+  border-color: rgba(37,99,235,0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(37,99,235,0.15);
+}
+.testimonial-stars { color: var(--warning); margin-bottom: 18px; font-size: 18px; letter-spacing: 3px; }
+.testimonial-text {
+  font-size: 14px;
+  color: var(--text-sec);
+  line-height: 1.8;
+  margin-bottom: 24px;
+  flex-grow: 1;
+  position: relative;
+}
+.testimonial-quote-mark {
+  display: block;
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--accent);
+  opacity: 0.2;
+  line-height: 1;
+  margin-bottom: 4px;
+  font-family: Georgia, serif;
+  font-style: normal;
+}
+.testimonial-divider { height: 1px; background: var(--border); margin-bottom: 20px; }
+.testimonial-author { display: flex; align-items: center; gap: 14px; }
+.testimonial-avatar-wrap {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(6,182,212,0.18));
+  border: 1px solid rgba(37,99,235,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.testimonial-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.testimonial-role { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.testimonial-company { font-size: 11px; color: #60A5FA; font-weight: 600; margin-top: 2px; }
+
+:root.light .testimonial-card { background: #fff; border-color: var(--border); }
+:root.light .section-testimonials { background: var(--bg); }
+
+@media (max-width: 768px) {
+  .testimonials-grid { grid-template-columns: 1fr; gap: 14px; }
+  .section-testimonials { padding: 56px 0; }
+}
+</style>
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      </div>
+      <span>МОЛВИ</span>
+    </a>
+    <div class="nav-links">
+      <a href="#product" class="nav-link">Продукт</a>
+      <a href="#features" class="nav-link">Функции</a>
+      <a href="#try-transcribe" class="nav-link">Расшифровка</a>
+      <a href="#pricing" class="nav-link">Цены</a>
+      <a href="#blog" class="nav-link">Блог</a>
+    </div>
+    <div class="nav-actions">
+      <!-- Theme Switch -->
+      <label class="theme-switch" aria-label="Переключить тему" id="themeSwitch">
+        <input type="checkbox" id="themeCheckbox" autocomplete="off">
+        <div class="theme-switch-track"></div>
+        <div class="theme-switch-thumb"></div>
+        <!-- sun icon (light mode active) -->
+        <span class="theme-switch-icon theme-switch-sun">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </span>
+        <!-- moon icon (dark mode active) -->
+        <span class="theme-switch-icon theme-switch-moon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+      </label>
+
+      <a href="https://t.me/molviai_bot" class="btn-secondary nav-transcribe-btn" target="_blank" rel="noopener">
+        Расшифровать аудио
+      </a>
+      <a href="https://t.me/steffff13" class="btn-primary nav-buy-btn" target="_blank" rel="noopener">
+        Купить
+      </a>
+      <button class="nav-mobile-btn" id="mobileMenuBtn" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileDrawer">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <div class="nav-logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+      <span>МОЛВИ</span>
+    </div>
+    <button class="drawer-close-btn" onclick="closeMobileMenu()" aria-label="Закрыть меню">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <nav class="mobile-nav">
+    <a href="#product" onclick="closeMobileMenu()">Продукт</a>
+    <a href="#features" onclick="closeMobileMenu()">Функции</a>
+    <a href="#try-transcribe" onclick="closeMobileMenu()">Расшифровка</a>
+    <a href="#pricing" onclick="closeMobileMenu()">Цены</a>
+    <a href="#blog" onclick="closeMobileMenu()">Блог</a>
+  </nav>
+  <!-- Theme toggle moved here from top nav on mobile -->
+  <div class="drawer-theme-row">
+    <span>Тема оформления</span>
+    <label class="theme-switch" aria-label="Переключить тему" id="drawerThemeSwitch">
+      <input type="checkbox" id="drawerThemeCheckbox" autocomplete="off">
+      <div class="theme-switch-track"></div>
+      <div class="theme-switch-thumb"></div>
+      <span class="theme-switch-icon theme-switch-sun">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </span>
+      <span class="theme-switch-icon theme-switch-moon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </span>
+    </label>
+  </div>
+  <div class="drawer-cta-wrap">
+    <a href="https://t.me/molviai_bot" class="btn-secondary drawer-buy-btn" target="_blank" rel="noopener" onclick="closeMobileMenu()">
+      Расшифровать аудио
+    </a>
+    <a href="https://t.me/steffff13" class="btn-primary drawer-buy-btn" target="_blank" rel="noopener" onclick="closeMobileMenu()">
+      Купить
+    </a>
+  </div>
+</div>
+
+<!-- ================================================
+     HERO
+================================================ -->
+<section class="hero" id="hero">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <!-- Left content -->
+    <div class="hero-content">
+      <div class="eyebrow">★ Лучший российский ИИ-диктофон 2026</div>
+      <h1 class="hero-title">
+        <span id="typewriter-line1">МОЛВИ —</span><br>
+        <span class="line2" id="typewriter-line2">запишет, расшифрует</span><br>
+        <span id="typewriter-line3">и составит план</span>
+      </h1>
+      <p class="hero-sub">
+        Физический диктофон + искусственный интеллект.<br>
+        Протокол встречи готов через 3 минуты.<br>
+        Данные никогда не покидают Россию.
+      </p>
+      <div class="hero-ctas">
+        <a href="https://t.me/steffff13" class="btn-primary hero-cta-primary" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          Купить устройство
+        </a>
+        <a href="#product" class="btn-secondary hero-cta-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,8 16,12 10,16" fill="currentColor"/></svg>
+          Как это работает
+        </a>
+      </div>
+      <div class="hero-trust">
+        <span>🔒 Данные в России</span>
+        <span>✅ 152-ФЗ</span>
+        <span>⚡ GigaChat</span>
+        <span>📱 iOS + Android</span>
+      </div>
+    </div>
+
+    <!-- Right visual -->
+    <div class="hero-visual" id="deviceContainer">
+      <div class="glow-ring"></div>
+      <div class="glow-ring"></div>
+      <div class="glow-ring"></div>
+
+      <div class="device-container" id="deviceParallax">
+        <!-- App preview card (right) -->
+        <div class="app-preview">
+          <div class="app-preview-title">ИИ-резюме</div>
+          <div class="app-preview-line"><strong>Решение:</strong> Увеличить бюджет до 2 млн</div>
+          <div class="app-preview-line"><strong>Задача:</strong> Иванов — отчёт к пятнице</div>
+          <div class="app-preview-line"><strong>Следующий шаг:</strong> встреча 20 марта</div>
+          <div class="app-preview-badges">
+            <span class="app-preview-badge">AmoCRM ✓</span>
+          </div>
+        </div>
+
+        <!-- Main device -->
+        <div class="device-body">
+          <div class="device-led"></div>
+          <div class="device-screen">
+            <div class="wave-bars">
+            <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+            <div class="device-timer" id="deviceTimer">00:23:45</div>
+          </div>
+          <div class="device-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          </div>
+        </div>
+
+        <!-- Stats card (left) -->
+        <div class="stats-card">
+          <div class="stats-card-num">99%</div>
+          <div class="stats-card-label">Точность<br>транскрибации</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     СОЦИАЛЬНЫЕ ДОКАЗАТЕЛЬСТВА
+================================================ -->
+<section class="section-proof">
+  <div class="container">
+    <p class="proof-heading reveal">Работает на технологиях</p>
+    <div class="proof-logos reveal">
+      <span class="proof-logo">SberCloud</span>
+      <span class="proof-logo">GigaChat AI</span>
+      <span class="proof-logo">SaluteSpeech</span>
+      <span class="proof-logo">AmoCRM</span>
+      <span class="proof-logo">Битрикс24</span>
+      <span class="proof-logo">✅ 152-ФЗ</span>
+      <span class="proof-logo">🛡 ФСТЭК</span>
+    </div>
+    <div class="proof-metrics">
+      <div class="metric-card reveal">
+        <div class="metric-num" data-count="99" data-suffix="%">0%</div>
+        <div class="metric-label">Точность транскрибации<br>SaluteSpeech</div>
+      </div>
+      <div class="metric-card reveal delay-1">
+        <div class="metric-num">3 мин</div>
+        <div class="metric-label">До готового протокола<br>встречи с GigaChat</div>
+      </div>
+      <div class="metric-card reveal delay-2">
+        <div class="metric-num" data-count="50" data-suffix="+">0+</div>
+        <div class="metric-label">Шаблонов для любого<br>сценария</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     ПРОТЕСТИРУЙТЕ РАСШИФРОВКУ ОНЛАЙН (бот) — сразу после hero
+================================================ -->
+<style>
+.tt-section{padding:80px 0}
+.tt-wrap{max-width:1140px;margin:0 auto;padding:0 24px}
+.tt-card{position:relative;overflow:hidden;border-radius:28px;border:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(37,99,235,0.14),rgba(6,182,212,0.08));
+  padding:56px;display:grid;grid-template-columns:1.05fr 0.95fr;gap:48px;align-items:center}
+.tt-card::before{content:"";position:absolute;top:-40%;right:-10%;width:520px;height:520px;
+  background:radial-gradient(circle,rgba(6,182,212,0.22),transparent 60%);pointer-events:none}
+.tt-card::after{content:"";position:absolute;bottom:-40%;left:-15%;width:460px;height:460px;
+  background:radial-gradient(circle,rgba(37,99,235,0.20),transparent 60%);pointer-events:none}
+.tt-content{position:relative;z-index:2}
+.tt-content h2{font-size:clamp(28px,3.4vw,42px);font-weight:800;line-height:1.12;letter-spacing:-1px;margin:14px 0 16px}
+.tt-content p.tt-sub{color:var(--text-sec);font-size:17px;line-height:1.65;margin-bottom:26px;max-width:480px}
+.tt-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:30px}
+.tt-step{display:flex;align-items:center;gap:13px;color:var(--text);font-size:15px;font-weight:500}
+.tt-step .n{flex-shrink:0;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+.tt-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.tt-trust{display:flex;gap:18px;flex-wrap:wrap;color:var(--text-muted);font-size:13.5px;font-weight:500}
+.tt-trust span{display:inline-flex;align-items:center;gap:6px}
+/* Telegram-mockup */
+.tt-phone{position:relative;z-index:2;background:var(--bg);border:1px solid var(--border);border-radius:22px;
+  padding:18px;box-shadow:0 30px 80px rgba(0,0,0,0.35)}
+.tt-phone-top{display:flex;align-items:center;gap:10px;padding:4px 4px 14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.tt-ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px}
+.tt-phone-top b{font-size:14px;color:var(--text)}
+.tt-phone-top small{display:block;color:#22c55e;font-size:11px;font-weight:600}
+.tt-bubble{border-radius:14px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin-bottom:10px;max-width:88%}
+.tt-bubble.user{margin-left:auto;background:linear-gradient(135deg,var(--accent),#1d4ed8);color:#fff;border-bottom-right-radius:4px}
+.tt-bubble.bot{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.tt-wave{display:flex;align-items:center;gap:9px}
+.tt-wave .bars{display:flex;align-items:center;gap:3px;height:20px}
+.tt-wave .bars i{width:3px;border-radius:2px;background:rgba(255,255,255,0.85)}
+.tt-wave .dur{font-size:12px;opacity:.9;font-weight:600}
+.tt-chip{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600;color:var(--cyan);
+  background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.25);border-radius:20px;padding:3px 10px}
+@media (max-width:880px){
+  .tt-card{grid-template-columns:1fr;padding:32px 22px;gap:34px}
+  .tt-phone{max-width:420px;margin:0 auto}
+  .tt-content p.tt-sub{max-width:none}
+}
+</style>
+<section class="tt-section" id="try-transcribe">
+  <div class="tt-wrap">
+    <div class="tt-card reveal">
+      <div class="tt-content">
+        <div class="eyebrow">Попробуйте бесплатно</div>
+        <h2>Расшифруйте аудио в текст<br><span class="gradient-text">прямо сейчас — без устройства</span></h2>
+        <p class="tt-sub">Не обязательно покупать диктофон, чтобы оценить МОЛВИ. Пришлите голосовое, аудио или видео в наш Telegram-бот — получите готовый текст с пунктуацией и кратким содержанием.</p>
+        <div class="tt-steps">
+          <div class="tt-step"><span class="n">1</span> Откройте бот и пришлите запись</div>
+          <div class="tt-step"><span class="n">2</span> МОЛВИ расшифрует — час записи за ~3 минуты</div>
+          <div class="tt-step"><span class="n">3</span> Заберите текст и саммари в TXT, PDF или DOCX</div>
+        </div>
+        <div class="tt-ctas">
+          <a href="https://t.me/molviai_bot" class="btn-primary-lg" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+            Расшифровать аудио
+          </a>
+          <a href="transcribe/" class="btn-secondary btn-secondary-lg">Подробнее о расшифровке</a>
+        </div>
+        <div class="tt-trust">
+          <span>🔒 Не храним файлы</span>
+          <span>⚡ Час записи за 3 минуты</span>
+          <span>🇷🇺 Серверы в России</span>
+        </div>
+      </div>
+      <div class="tt-phone reveal delay-1">
+        <div class="tt-phone-top">
+          <div class="tt-ava">М</div>
+          <div><b>МОЛВИ</b><small>бот • онлайн</small></div>
+        </div>
+        <div class="tt-bubble user">
+          <div class="tt-wave">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            <span class="bars"><i style="height:8px"></i><i style="height:14px"></i><i style="height:20px"></i><i style="height:11px"></i><i style="height:17px"></i><i style="height:7px"></i><i style="height:13px"></i><i style="height:19px"></i><i style="height:9px"></i><i style="height:15px"></i></span>
+            <span class="dur">58:12</span>
+          </div>
+        </div>
+        <div class="tt-bubble bot">
+          «…итого по встрече: запускаем пилот с 1 июля, Анна готовит смету до пятницы, Игорь согласует бюджет с финансовым отделом…»
+          <br><span class="tt-chip">📋 Саммари готово · ✅ 3 задачи</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     СЦЕНАРИИ — КАРУСЕЛЬ (9 карточек)
+================================================ -->
+<section class="scenarios-section" id="product">
+  <div class="scenarios-container">
+    <div class="text-center mb-20 reveal">
+      <h2 class="scenarios-title">Один девайс — сотни <span class="scenarios-accent">сценариев</span></h2>
+      <p class="scenarios-sub">От офиса до полевых условий — МОЛВИ адаптируется под ваши задачи.</p>
+    </div>
+
+    <!-- Carousel wrapper -->
+    <div class="scenarios-carousel-wrap">
+      <button class="sc-btn sc-btn-prev" id="scPrev" aria-label="Назад">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="scenarios-viewport" id="scenariosViewport">
+        <div class="scenarios-track" id="scenariosTrack">
+
+          <!-- 1: Встреча в офисе -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">business_center</span>
+            <h3 class="sc-title">Встреча в офисе</h3>
+            <p class="sc-text">Записывайте совещания без ноутбука. Устройство само выделит спикеров и составит протокол со списком задач.</p>
+            <div class="sc-img-wrap">
+              <img alt="professional modern conference room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuUIe2Spcm2VWDpJOTyLGiUnQmtuGTB1FDqYAJT1KRcyz7T9Cjz6xVx7P5Uiv1r7YC2Tc9aGaZA19qnZ6qcSmG7p3lLnA7e-bjszco2Dl86cN1nuELyUe4j29hdTZz0eHWlYd1xBB-N6NwibxYCr2AkganJ2ey66gH2ngCBhYcCSO5Jm1qfBIk5FDv7bp_Ai1NGddxg_ImsMIUXSkwaKCOFJo9iqs6n-dqd1yVSm17ldb7kMMtwxYTas93gL3ev3IDRWn-yqOE-PiX"/>
+            </div>
+          </div>
+
+          <!-- 2: Телефонный звонок -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">phone_callback</span>
+            <h3 class="sc-title">Телефонный звонок</h3>
+            <p class="sc-text">Прикрепите МОЛВИ к смартфону для записи важных переговоров. Кристально чистый звук обоих собеседников.</p>
+            <div class="sc-img-wrap">
+              <img alt="voice recorder attached to a smartphone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZBgZ6hDw9ToLQUWbty6ItgP5AeFWITkUOqkHZ88BsBqPtsb9RzK9YyjXu8YqUK_wkS8SeJjpkkLrqdmFNLnbnid-DdvVvsclKRinF5NvEsXRnIXEm0bWLnBvyT-I4-HT6sQeIjNMjRyKD7CPdGQ_zRurM2TbDb0LycxnqQ3cppYY73EiPV4k8bomFC8Ak_sjLx5h3GGEfVQ_6OcLAXBWyF_HarcvdCfL67FAdCg8KUcY11aIFFg0rSocsS5fIYyt8IWbldcLLv-dy"/>
+            </div>
+          </div>
+
+          <!-- 3: Голосовые заметки -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">edit_note</span>
+            <h3 class="sc-title">Голосовые заметки</h3>
+            <p class="sc-text">Диктуйте мысли на ходу. ИИ структурирует поток сознания в чёткие пункты и идеи.</p>
+            <div class="sc-img-wrap">
+              <img alt="voice recorder near a notebook on a workspace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6RZwI0YdwbRMFeB_vtYUnWZ5lu1x1ZKTVisy-TRcRzZF1dEdfa__tsZ51y_8IzapVn-BXzYVDg80X90K9-EjyepPiJQU7ihhQIQSQa_E0yWjKOrfQ-bexPHd6k715hqPjN1wrWcDT8mEduO-hDF1MM8JkP3xy5dX0b2T7ifjF-Qb1A_wspx3Zz0Xytdjh0tAR5l4pwQvji7ksmrXMYFlyEha6mScjKkgqcGEd4KqLmjYmoK4k-pXzpvCHGP2tBIoiXRLsAPNokQzR"/>
+            </div>
+          </div>
+
+          <!-- 4: Лекция -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">school</span>
+            <h3 class="sc-title">Лекция</h3>
+            <p class="sc-text">Запишите лекцию или онлайн-курс и получите готовый конспект с ключевыми тезисами. Больше не нужно судорожно переписывать за преподавателем.</p>
+            <div class="sc-img-wrap">
+              <img alt="modern university lecture hall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdHEgfIeBIlDDeWzJvnkNl7hGPEYk_GTun3J_Dx9nXJbD9lnOTR_mCi_IaB7_1G0Wokcpn3P_lufFMnIaT-Lkhvzw9bpI77uNb4BPyGSArXXwXAvGvrt5ZNBMl1mCtceEIO0isGerPjMz29wWn15R0VkNFg-i0CsGli2g0kdGgHaQ1nyyOVXw-NEOoDidonIPyq3TEJ7GM8kiAeddLGNrF-SdtdROWS6vklBdyGGAuknTKtmJcGNE-aKa9bKACzI2hwxxNnpBHXLha"/>
+            </div>
+          </div>
+
+          <!-- 5: Работа с психологом -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">psychology</span>
+            <h3 class="sc-title">Работа с психологом</h3>
+            <p class="sc-text">Запишите сессию, чтобы потом вернуться к важным инсайтам. Никаких записей от руки — фокус на разговоре, а не на блокноте.</p>
+            <div class="sc-img-wrap">
+              <img alt="cozy interior for conversation and therapy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi0zF9LuS10kaFHrTe4xFV7tG9RZ54KK5lfah7ppPLAI39Y8n1KK244iHzo9651F8VNsw_rFrdz9S1qp6sHi2tkKaivGe9KGVzO5r1MPQUmg4K-b_9Vx_C1eZbvMl0Nlh8P7z5aV_vvNBW3_WggUG_36yE6CTDu0B3fRp7jt5pdOnDlHqhWZU7DfJFnnQr3W1GhFPaoyGzrh_uyGivcmx7PSwBPEAPnZoDlBBPFNau3cG8BD4MjRpQtzihdZXMNMmMJ5FaYqnNOY_E"/>
+            </div>
+          </div>
+
+          <!-- 6: Юридическая консультация -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">gavel</span>
+            <h3 class="sc-title">Юридическая консультация</h3>
+            <p class="sc-text">Запишите встречу с юристом и получите структурированное резюме: суть вопроса, позиция, рекомендации, следующий шаг.</p>
+            <div class="sc-img-wrap">
+              <img alt="professional law office desk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGf9qCqvHqG_aE6Url_-K1QJ4KU5fwvps5-n_lNyDDPeiQFrUnCP4-Iz4s6iTQov4wBvYDXfowVRnub7cwBMM_mPcDEuANRKjiRNqZvuj-gwzaiiCU32efrh9CYcb8vnXmGzZn0kYg4cbViNhjtBI7cbWIIGl0Xz4Mo7ZMBQIfqNQZMYZwnS2Kqh25W4M7CIYoyaLK9lKbntMZLdLympElJNzdA5fA8EuLonFdzepRS-cuIo9czmlPRaLkrdr4Rhf73egYDNN9u5WW"/>
+            </div>
+          </div>
+
+          <!-- 7: Собеседование -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">person_search</span>
+            <h3 class="sc-title">Собеседование</h3>
+            <p class="sc-text">Запишите разговор с кандидатом и сразу получите карточку: ответы на вопросы, впечатление, решение. Больше не перепутаете людей после пяти встреч подряд.</p>
+            <div class="sc-img-wrap">
+              <img alt="professional job interview in a modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRHERmbVHmSwSyFm09rYXW4ewAGRhY0egRxDQNHgqxxBxBPIkDI_k7FYjqAUgwXTGyILbrzDObj_AVEJTc8gbVl6WpmqRI4o8riICIaS3a7yEr_NhOaYS44noVfO6-6BOnQhx68RbpZV_BKVdUlaEX2KR215hO6VxR-YOeTd8EZ-x_5-PE_Xvtas4SJ9GKTf2E_r2Vn28BXr7A9ojfit3K3gCUE_fYA33WCE3y6v2O_KKchDkX0EdqylLcc2wOU342YbAXwOfQ2vKr"/>
+            </div>
+          </div>
+
+          <!-- 8: Неформальная встреча -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">coffee</span>
+            <h3 class="sc-title">Неформальная встреча</h3>
+            <p class="sc-text">Иногда лучшие идеи рождаются за кофе. Запишите разговор — потом можно вернуться к любой теме или просто посмотреть, о чём вы вообще говорили.</p>
+            <div class="sc-img-wrap">
+              <img alt="friends having an informal meeting in a cozy cafe" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB5WHD1pel1jsHHT6r9wl986Utrk3qGsb8SNwfqatp0B2spFq1dWHOl4N_eab7lfllnwCAQO2UekRcQarbfq4qzVi1aU7BUFRXM01P_eDIXKhb4_rw5ZPsWwYYa1I4Ibohwk95uvxiqHQsrDKLeW-iSp7c1UwUg1A4NhMtMvCwohHwnztVABafwnEQ2PfyoswvHabRTkf5_AaHawLay6DCS5T67Q6_m3LUnxbRj2-TRTD3lZI-F5fkHm0zaqamF-fvZXv_CfiVxhJI"/>
+            </div>
+          </div>
+
+          <!-- 9: Интервью -->
+          <div class="sc-card">
+            <span class="sc-icon material-symbols-outlined">mic</span>
+            <h3 class="sc-title">Интервью</h3>
+            <p class="sc-text">Для журналистов, подкастеров и исследователей. МОЛВИ выделит спикеров, расшифрует речь и сохранит таймкоды — монтировать и цитировать станет в разы проще.</p>
+            <div class="sc-img-wrap">
+              <img alt="professional interview or podcast recording setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6Mb2_IqdrRTLQuIynQS0-EI6V2922pw31r0-zcbzdLcumMeZkIsaIoqhNJWcx2IwF7Ad0a24mpo-HZc3fgGxXAbjMm_RnaAE5Bo22QU-jg2Ay9SG8VoAJzG54Ny53ALmCFwXOw_8_my9ghJCS1CI-oiHyUW80_kL_xDSn5MADoStsTGulcxMUPZl0yC4a3c4R4ODJbXbIBkegy9sObHa5qPT1vGoM86rDhFpSWIMyL5ITsxFOypQQREhjZwiCqsYOMdD_hkl7XXJX"/>
+            </div>
+          </div>
+
+        </div><!-- /track -->
+      </div><!-- /viewport -->
+      <button class="sc-btn sc-btn-next" id="scNext" aria-label="Вперёд">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div><!-- /carousel-wrap -->
+
+    <!-- Dots -->
+    <div class="sc-dots" id="scDots"></div>
+  </div>
+</section>
+
+<!-- ================================================
+     ФУНКЦИИ
+================================================ -->
+<!-- Features Bento Grid (из вашего кода) -->
+<section class="py-32 bg-surface-container-low/20 px-6" id="features">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-20 reveal">
+      <h2 class="text-4xl md:text-6xl font-black mb-8 tracking-tighter text-editorial">Ваш личный <span class="text-primary italic">ИИ-ассистент</span></h2>
+      <p class="text-on-surface-variant text-xl">Мы объединили лучший софт с премиальным «железом».</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 reveal" style="animation-delay: 0.2s">
+      <!-- Transcription -->
+      <div class="md:col-span-2 glass p-12 rounded-[2.5rem] flex flex-col justify-between hover:border-primary/40 transition-all border-l-4 border-l-primary/60">
+        <div>
+          <span class="material-symbols-outlined text-primary mb-6 text-4xl" data-icon="text_fields">text_fields</span>
+          <h4 class="text-3xl font-black mb-4 tracking-tight">Транскрибация SaluteSpeech</h4>
+          <p class="text-on-surface-variant text-lg leading-relaxed">Превращает голос в текст с точностью до 99%. Понимает термины, жаргонизмы и разные акценты.</p>
+        </div>
+      </div>
+      <!-- Diarization -->
+      <div class="glass p-12 rounded-[2.5rem] hover:border-primary/40 transition-all">
+        <span class="material-symbols-outlined text-primary mb-6 text-4xl" data-icon="group">group</span>
+        <h4 class="text-2xl font-black mb-4 tracking-tight">Диаризация (8 чел.)</h4>
+        <p class="text-on-surface-variant leading-relaxed">ИИ распознает голоса и автоматически подписывает, кто именно говорит в диалоге.</p>
+      </div>
+      <!-- GigaChat -->
+      <div class="glass p-12 rounded-[2.5rem] hover:border-primary/40 transition-all">
+        <span class="material-symbols-outlined text-primary mb-6 text-4xl" data-icon="auto_awesome">auto_awesome</span>
+        <h4 class="text-2xl font-black mb-4 tracking-tight">GigaChat Summary</h4>
+        <p class="text-on-surface-variant leading-relaxed">Автоматическое резюме встречи: главные темы, принятые решения и следующие шаги.</p>
+      </div>
+      <!-- CRM -->
+      <div class="md:col-span-2 glass p-12 rounded-[2.5rem] flex flex-col md:flex-row gap-10 items-center hover:border-primary/40 transition-all">
+        <div class="flex-1">
+          <span class="material-symbols-outlined text-primary mb-6 text-4xl" data-icon="hub">hub</span>
+          <h4 class="text-3xl font-black mb-4 tracking-tight">CRM Интеграции</h4>
+          <p class="text-on-surface-variant text-lg leading-relaxed">Запись и результат автоматически попадают в карточку сделки AmoCRM или Bitrix24.</p>
+        </div>
+        <div class="flex gap-5">
+          <div class="bg-white/5 px-8 py-5 rounded-2xl border border-white/10 flex items-center justify-center font-black text-xs uppercase tracking-widest">AmoCRM</div>
+          <div class="bg-white/5 px-8 py-5 rounded-2xl border border-white/10 flex items-center justify-center font-black text-xs uppercase tracking-widest text-blue-400">Bitrix24</div>
+        </div>
+      </div>
+      <!-- Local Data -->
+      <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Left: Chat AI -->
+        <div class="glass p-12 rounded-[2.5rem] hover:border-primary/40 transition-all bg-gradient-to-r from-transparent to-[#1E2D4A]/20">
+          <div class="flex items-center gap-4 mb-6">
+            <span class="material-symbols-outlined text-primary text-4xl" data-icon="forum">forum</span>
+            <h4 class="text-3xl font-black tracking-tight">Чат AI</h4>
+          </div>
+          <p class="text-on-surface-variant text-lg leading-relaxed">
+            Спросите что угодно по записи этого разговора: <span class="text-white">«Что вы решили по бюджету?»</span>.
+            МОЛВИ ответит и приложит таймкод из вашей записи.
+          </p>
+        </div>
+
+        <!-- Right: Local storage -->
+        <div class="glass p-12 rounded-[2.5rem] flex flex-col justify-between hover:border-primary/40 transition-all bg-gradient-to-r from-[#1E2D4A]/20 to-transparent">
+          <div>
+            <h4 class="text-3xl font-black mb-4 tracking-tight">Локальное хранение и 152-ФЗ</h4>
+            <p class="text-on-surface-variant text-lg leading-relaxed">Все данные хранятся на серверах на территории РФ. Полное соответствие закону о персональных данных.</p>
+          </div>
+          <div class="mt-10 flex items-center gap-3 px-8 py-4 bg-green-500/10 text-green-400 rounded-full border border-green-500/20 text-sm font-black uppercase tracking-widest w-fit">
+            <span class="material-symbols-outlined text-lg" data-icon="verified_user">verified_user</span>
+            Безопасно в РФ
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     CRM ИНТЕГРАЦИЯ
+================================================ -->
+<section class="section-crm section-pad" id="crm">
+  <div class="container">
+    <div class="crm-grid">
+      <div>
+        <div class="eyebrow">Интеграция</div>
+        <h2 class="section-title reveal">CRM сама<br><span class="gradient-text">заполнит данные</span></h2>
+        <p class="section-sub reveal">Никаких ручных переносов. МОЛВИ автоматически создаёт задачи и добавляет протокол в нужную сделку.</p>
+        <div class="crm-steps reveal">
+          <div class="crm-step">
+            <div class="crm-step-num">1</div>
+            <div>
+              <div class="crm-step-title">Запись завершена</div>
+              <div class="crm-step-desc">Нажимаете стоп — МОЛВИ начинает транскрибацию и формирует саммари через 3 минуты.</div>
+            </div>
+          </div>
+          <div class="crm-step">
+            <div class="crm-step-num">2</div>
+            <div>
+              <div class="crm-step-title">GigaChat структурирует итоги</div>
+              <div class="crm-step-desc">Решения, задачи, дедлайны — всё автоматически по нужному шаблону из 50+.</div>
+            </div>
+          </div>
+          <div class="crm-step">
+            <div class="crm-step-num">3</div>
+            <div>
+              <div class="crm-step-title">Данные появляются в CRM</div>
+              <div class="crm-step-desc">Протокол — в карточке сделки. Задачи — у ответственных. Всё за 3 минуты.</div>
+            </div>
+          </div>
+        </div>
+        <div class="crm-badge-row reveal" style="margin-top:24px">
+          <span class="crm-badge amocrm">AmoCRM</span>
+          <span class="crm-badge bitrix">Битрикс24</span>
+          <span class="crm-badge soon">Notion (скоро)</span>
+          <span class="crm-badge soon">Telegram (скоро)</span>
+        </div>
+      </div>
+      <div class="crm-visual reveal">
+        <div class="crm-screen">
+          <div class="crm-screen-header">
+            <span class="crm-screen-dot" style="background:#FF5F57"></span>
+            <span class="crm-screen-dot" style="background:#FEBC2E"></span>
+            <span class="crm-screen-dot" style="background:#28C840"></span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-weight:600">AmoCRM — ООО ТехноГрупп</span>
+          </div>
+          <div class="crm-line" style="width:70%"></div>
+          <div class="crm-line highlight"></div>
+          <div class="crm-line short"></div>
+          <div class="crm-line highlight shorter"></div>
+          <div class="crm-line" style="width:50%"></div>
+        </div>
+        <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:12px;padding:16px;margin-bottom:14px">
+          <p style="font-size:11px;font-weight:700;color:#60A5FA;margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase">✓ Протокол добавлен автоматически</p>
+          <p style="font-size:11px;color:var(--text-sec);line-height:1.6">Встреча 15.03.2026 · Отдел продаж Q2<br>Решение: бюджет 2 млн ₽ · Ответственный: Иванов · Дедлайн: 18 марта</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:10px 14px;font-size:11px;font-weight:700;color:#10B981">☑ Задача: КП до 18.03</div>
+          <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:10px 14px;font-size:11px;font-weight:700;color:#10B981">☑ Встреча 25.03 14:00</div>
+        </div>
+        <p style="margin-top:14px;text-align:center;font-size:11px;color:var(--text-muted)">Создано через 2 мин 47 сек после записи</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     СРАВНЕНИЕ С PLAUD
+================================================ -->
+<section class="section-compare section-pad">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:0">
+      <div class="eyebrow">Сравнение</div>
+      <h2 class="section-title reveal">Зачем МОЛВИ,<br><span class="gradient-text">если есть PLAUD?</span></h2>
+      <p class="section-sub reveal section-sub-center">Мы честно сравнили. Судите сами.</p>
+    </div>
+    <div class="compare-table reveal">
+      <div class="compare-header">
+        <div class="compare-col-header">Параметр</div>
+        <div class="compare-col-header ours">🇷🇺 МОЛВИ</div>
+        <div class="compare-col-header theirs">PLAUD (США)</div>
+      </div>
+      <div id="compareBody"></div>
+      <div class="compare-footer">
+        Итого: МОЛВИ дешевле на <strong>40%</strong> и работает там, где PLAUD — нет.
+      </div>
+    </div>
+    <!-- Mobile stacked cards (shown at ≤768px) -->
+    <div class="compare-cards" id="compareCards"></div>
+  </div>
+</section>
+
+<!-- ================================================
+     ОТЗЫВЫ КЛИЕНТОВ
+================================================ -->
+<section class="section-testimonials" id="testimonials">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="eyebrow">Отзывы клиентов</div>
+      <h2 class="section-title reveal">Что говорят<br><span class="gradient-text">наши пользователи</span></h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card reveal">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">
+          <span class="testimonial-quote-mark">"</span>
+          МОЛВИ буквально спасла наш отдел продаж. Раньше менеджеры забывали по 30% договорённостей с клиентами. Теперь каждая встреча превращается в задачу в AmoCRM через 3 минуты. Конверсия выросла на 18%.
+        </div>
+        <div class="testimonial-divider"></div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar-wrap">🏢</div>
+          <div>
+            <div class="testimonial-name">Алексей Воронов</div>
+            <div class="testimonial-role">Руководитель отдела продаж</div>
+            <div class="testimonial-company">TechGroup Moscow</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal delay-1">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">
+          <span class="testimonial-quote-mark">"</span>
+          Для юридической практики критично, чтобы данные клиентов оставались в России. МОЛВИ — единственное решение с подтверждённым соответствием 152-ФЗ. Протоколы консультаций теперь создаются автоматически.
+        </div>
+        <div class="testimonial-divider"></div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar-wrap">⚖️</div>
+          <div>
+            <div class="testimonial-name">Марина Лебедева</div>
+            <div class="testimonial-role">Управляющий партнёр</div>
+            <div class="testimonial-company">Lebedev & Partners Law</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card reveal delay-2">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">
+          <span class="testimonial-quote-mark">"</span>
+          Покупал PLAUD — разочаровался. Данные в США, нет русских шаблонов, нет CRM-интеграции. Перешёл на МОЛВИ — совершенно другой уровень. И в два раза дешевле. Зачем переплачивать за зарубежный аналог?
+        </div>
+        <div class="testimonial-divider"></div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar-wrap">🚀</div>
+          <div>
+            <div class="testimonial-name">Дмитрий Козлов</div>
+            <div class="testimonial-role">CEO & Основатель</div>
+            <div class="testimonial-company">Kozlov Digital</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     ПРИЛОЖЕНИЕ
+================================================ -->
+<section class="section-app section-pad" id="app">
+  <div class="container">
+    <div class="app-grid">
+      <div>
+        <div class="eyebrow">Мобильное приложение</div>
+        <h2 class="section-title reveal">Приложение,<br><span class="gradient-text">которое думает за вас</span></h2>
+        <div class="app-tabs-nav reveal" role="tablist" aria-label="Функции приложения">
+          <button class="app-tab-btn active" onclick="switchAppTab(0)" role="tab" aria-selected="true" aria-controls="appTab0">Запись</button>
+          <button class="app-tab-btn" onclick="switchAppTab(1)" role="tab" aria-selected="false" aria-controls="appTab1">Результат</button>
+          <button class="app-tab-btn" onclick="switchAppTab(2)" role="tab" aria-selected="false" aria-controls="appTab2">В CRM</button>
+        </div>
+        <div class="app-tabs-container">
+        <div class="app-tab-content active" id="appTab0" role="tabpanel">
+          <h3>Одна кнопка — и всё</h3>
+          <p>Нажмите запись и забудьте о конспектах. МОЛВИ пишет всё с кристально чистым звуком — даже в шумной переговорной.</p>
+          <ul class="app-feature-list">
+            <li class="app-feature-item">Офлайн-запись до 40 часов</li>
+            <li class="app-feature-item">Шумоподавление на базе ИИ</li>
+            <li class="app-feature-item">Автосинхронизация при появлении сети</li>
+            <li class="app-feature-item">Физическая кнопка REC без телефона</li>
+          </ul>
+        </div>
+        <div class="app-tab-content" id="appTab1" role="tabpanel">
+          <h3>Саммари через 3 минуты</h3>
+          <p>GigaChat автоматически структурирует результат по нужному шаблону и готовит к отправке в CRM.</p>
+          <ul class="app-feature-list">
+            <li class="app-feature-item">Решения, задачи, следующие шаги</li>
+            <li class="app-feature-item">Экспорт в PDF, DOCX, TXT</li>
+            <li class="app-feature-item">Ask AI — задайте вопрос по записи</li>
+            <li class="app-feature-item">50+ шаблонов под любой сценарий</li>
+          </ul>
+        </div>
+        <div class="app-tab-content" id="appTab2" role="tabpanel">
+          <h3>Автоматически в CRM</h3>
+          <p>Нажимаете «Отправить в CRM» — протокол появляется в нужной карточке, задачи создаются в AmoCRM или Битрикс24.</p>
+          <ul class="app-feature-list">
+            <li class="app-feature-item">Нативная интеграция с AmoCRM или Битрикс24</li>
+            <li class="app-feature-item">Создание задач с дедлайном</li>
+            <li class="app-feature-item">Уведомления ответственным</li>
+            <li class="app-feature-item">OAuth — подключение за 1 клик</li>
+          </ul>
+        </div>
+        </div><!-- /app-tabs-container -->
+        <div class="app-store-badges reveal">
+          <a href="#" class="store-badge" aria-label="Download on the App Store">
+            <svg class="store-badge-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><g><g><path d="M18.546,12.763c0.024-1.87,1.004-3.597,2.597-4.576c-1.009-1.442-2.64-2.323-4.399-2.378c-1.851-0.194-3.645,1.107-4.588,1.107c-0.961,0-2.413-1.088-3.977-1.056C6.122,5.927,4.25,7.068,3.249,8.867c-2.131,3.69-0.542,9.114,1.5,12.097c1.022,1.461,2.215,3.092,3.778,3.035c1.529-0.063,2.1-0.975,3.945-0.975c1.828,0,2.364,0.975,3.958,0.938c1.64-0.027,2.674-1.467,3.66-2.942c0.734-1.041,1.299-2.191,1.673-3.408C19.815,16.788,18.548,14.879,18.546,12.763z"/><path d="M15.535,3.847C16.429,2.773,16.87,1.393,16.763,0c-1.366,0.144-2.629,0.797-3.535,1.829c-0.895,1.019-1.349,2.351-1.261,3.705C13.352,5.548,14.667,4.926,15.535,3.847z"/></g></g></svg>
+            <div class="store-badge-text">
+              <span class="store-badge-caption">Download on the</span>
+              <span class="store-badge-title">App Store</span>
+            </div>
+          </a>
+          <a href="#" class="store-badge" aria-label="Get it on Google Play">
+            <svg class="store-badge-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m21.762,9.942L4.67.378c-.721-.466-1.635-.504-2.393-.099-.768.411-1.246,1.208-1.246,2.08v19.282c0,.872.477,1.668,1.246,2.079.755.404,1.668.37,2.393-.098l17.092-9.564c.756-.423,1.207-1.192,1.207-2.058s-.451-1.635-1.207-2.058Zm-5.746-1.413l-2.36,2.36L5.302,2.534l10.714,5.995ZM2.604,21.906V2.094l9.941,9.906L2.604,21.906Zm2.698-.439l8.355-8.355,2.36,2.36-10.714,5.995Zm15.692-8.78l-3.552,1.987-2.674-2.674,2.674-2.674,3.552,1.987c.363.203.402.548.402.686s-.039.483-.402.686Z"/></svg>
+            <div class="store-badge-text">
+              <span class="store-badge-caption store-badge-caption--caps">GET IT ON</span>
+              <span class="store-badge-title">Google Play</span>
+            </div>
+          </a>
+        </div>
+        <p class="app-free-note">Бесплатно. 200 минут (5 встреч) при регистрации.</p>
+      </div>
+
+      <!-- Phone mockup -->
+      <div class="phone-wrap">
+        <div class="phone-mockup reveal" id="phoneMockup">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <!-- Tab 0: Recording -->
+            <div id="phoneTab0" class="rec-screen">
+              <div class="rec-status"><span class="rec-dot"></span> Запись идёт</div>
+              <div class="rec-timer" id="phoneTimer">00:23:47</div>
+              <div class="rec-waves">
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+                <div class="rec-wave-bar"></div>
+              </div>
+              <div class="rec-btn">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              </div>
+            </div>
+            <!-- Tab 1: Result -->
+            <div id="phoneTab1" class="result-screen" style="display:none">
+              <div class="result-label">ИИ-саммари готово</div>
+              <div class="result-summary">Встреча 15.03 · Продажи Q2<br>Решили: увеличить бюджет маркетинга до 2 млн. Следующая встреча — 25 марта. Иванов готовит КП...</div>
+              <div style="margin:12px 0 8px">
+                <div class="result-label">Задачи (3)</div>
+                <div class="result-task"><span class="result-check">☑</span>Иванов: КП до 18.03</div>
+                <div class="result-task"><span class="result-check">☑</span>Петров: согласовать бюджет</div>
+                <div class="result-task"><span style="color:var(--warning);font-weight:800">☐</span>Встреча 25.03 в 14:00</div>
+              </div>
+              <div class="result-btns">
+                <span class="result-btn primary">В AmoCRM</span>
+                <span class="result-btn">PDF</span>
+                <span class="result-btn">Ask AI</span>
+              </div>
+            </div>
+            <!-- Tab 2: CRM -->
+            <div id="phoneTab2" class="crm-screen-ph" style="display:none">
+              <div class="crm-header-bar">AmoCRM</div>
+              <div class="crm-card-item">
+                <div class="crm-card-name">ООО ТехноГрупп</div>
+                <div class="crm-card-badge">✓ Протокол добавлен</div>
+                <div class="crm-card-line">15.03.2026 · 3 задачи создано</div>
+              </div>
+              <div style="margin-top:10px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:10px;padding:12px">
+                <p style="font-size:10px;font-weight:700;color:#60A5FA;margin-bottom:6px">Протокол встречи</p>
+                <p style="font-size:10px;color:var(--text-muted);line-height:1.6">Решение: бюджет 2 млн ₽<br>Ответственный: Иванов<br>Дедлайн: 18 марта</p>
+              </div>
+              <div style="margin-top:10px;text-align:center;font-size:10px;color:var(--success);font-weight:600">✓ Создано автоматически</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     ТАРИФЫ
+================================================ -->
+<section class="section-pricing section-pad" id="pricing">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="eyebrow">Тарифы</div>
+      <h2 class="section-title reveal">Простые цены.<br><span class="gradient-text">Без сюрпризов.</span></h2>
+    </div>
+    <div class="pricing-grid reveal" id="pricingGrid">
+      <!-- Starter -->
+      <div class="price-card">
+        <div class="price-plan-name">Старт</div>
+        <div class="price-amount"><span class="currency">₽</span>0<span class="period">/мес</span></div>
+        <div class="price-sub">200 мин (5 встреч)</div>
+        <div class="price-divider"></div>
+        <ul class="price-feature-list">
+          <li class="price-feature yes">Транскрибация</li>
+          <li class="price-feature yes">Базовый саммари</li>
+          <li class="price-feature yes">Экспорт TXT</li>
+          <li class="price-feature no">CRM-интеграции</li>
+          <li class="price-feature no">50+ шаблонов</li>
+          <li class="price-feature no">Диаризация</li>
+        </ul>
+        <a href="#" class="btn-secondary price-card-cta">Начать бесплатно</a>
+      </div>
+      <!-- Base (popular) -->
+      <div class="price-card popular">
+        <div class="price-popular-badge">⭐ Популярный</div>
+        <div class="price-plan-name price-plan-name-accent">Базовый</div>
+        <div class="price-amount" id="basePrice"><span class="currency">₽</span>1&nbsp;200<span class="period">/мес</span></div>
+        <div class="price-sub" id="baseSub">600 мин/мес (15 встреч)</div>
+        <div class="price-divider"></div>
+        <ul class="price-feature-list">
+          <li class="price-feature yes">Транскрибация 99%</li>
+          <li class="price-feature yes">Диаризация (8 чел.)</li>
+          <li class="price-feature yes">50+ ИИ-шаблонов</li>
+          <li class="price-feature yes">AmoCRM + Битрикс24</li>
+          <li class="price-feature yes">Ask AI</li>
+          <li class="price-feature yes">Экспорт PDF/DOCX</li>
+          <li class="price-feature no">Конструктор шаблонов</li>
+        </ul>
+        <a href="#" class="btn-primary price-card-cta popular-shadow">Выбрать базовый</a>
+        <p class="price-compare">vs PLAUD Pro: 8 990 ₽/год<br><strong>МОЛВИ на 44% дешевле</strong></p>
+      </div>
+      <!-- Pro -->
+      <div class="price-card">
+        <div class="price-plan-name">Про</div>
+        <div class="price-amount" id="proPrice"><span class="currency">₽</span>2&nbsp;800<span class="period">/мес</span></div>
+        <div class="price-sub" id="proSub">1 200 мин/мес (30 встреч)</div>
+        <div class="price-divider"></div>
+        <ul class="price-feature-list">
+          <li class="price-feature yes">Всё из Базового</li>
+          <li class="price-feature yes">Конструктор шаблонов</li>
+          <li class="price-feature yes">Приоритетная обработка</li>
+          <li class="price-feature yes">API-доступ</li>
+          <li class="price-feature yes">Поддержка 24/7</li>
+          <li class="price-feature yes">Командный доступ</li>
+        </ul>
+        <a href="#" class="btn-secondary price-card-cta">Выбрать Про</a>
+      </div>
+    </div>
+
+    <div class="pricing-enterprise reveal">
+      <div class="enterprise-info">
+        <h4>🏛 Для команд и госсектора</h4>
+        <p>On-premise · Безлимит · ФСТЭК · Корпоративный договор · 44-ФЗ</p>
+        <div class="enterprise-tags">
+          <span class="enterprise-tag">152-ФЗ</span>
+          <span class="enterprise-tag">187-ФЗ (КИИ)</span>
+          <span class="enterprise-tag">On-premise</span>
+          <span class="enterprise-tag">ФСТЭК</span>
+          <span class="enterprise-tag">от 60 000 ₽/год</span>
+        </div>
+      </div>
+      <a href="#" class="btn-primary enterprise-cta">Обсудить корпоративный тариф →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     БЛОГ (встроенная секция, без перехода на отдельную страницу)
+================================================ -->
+<style>
+.bl-section{padding:90px 0}
+.bl-wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.bl-head{text-align:center;margin-bottom:44px}
+.bl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.bl-card{display:flex;flex-direction:column;background:var(--surface,rgba(255,255,255,0.03));
+  border:1px solid var(--border);border-radius:20px;padding:26px;text-decoration:none;
+  transition:transform .25s,border-color .25s,box-shadow .25s}
+.bl-card:hover{transform:translateY(-5px);border-color:rgba(37,99,235,0.45);box-shadow:0 18px 50px rgba(0,0,0,0.3)}
+.bl-tag{align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.3px;color:var(--cyan);
+  background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.22);border-radius:20px;padding:4px 12px;margin-bottom:16px}
+.bl-card h3{font-size:19px;font-weight:700;line-height:1.32;color:var(--text);margin-bottom:10px}
+.bl-card p{font-size:14.5px;line-height:1.6;color:var(--text-sec);flex-grow:1;margin-bottom:18px}
+.bl-readmore{font-size:14px;font-weight:700;color:#60A5FA;display:inline-flex;align-items:center;gap:6px}
+.bl-allbtn{text-align:center;margin-top:38px}
+@media (max-width:880px){.bl-grid{grid-template-columns:1fr}.bl-section{padding:64px 0}}
+</style>
+<section class="bl-section" id="blog">
+  <div class="bl-wrap">
+    <div class="bl-head reveal">
+      <div class="eyebrow eyebrow-center">Блог</div>
+      <h2 class="section-title">Полезные статьи <span class="gradient-text">о расшифровке аудио</span></h2>
+      <p class="section-sub section-sub-center" style="margin:14px auto 0">Как перевести голос в текст, что такое транскрибация и как делать это быстро и бесплатно.</p>
+    </div>
+    <div class="bl-grid">
+      <a href="blog/kak-perevesti-golosovoe-v-tekst.html" class="bl-card reveal">
+        <span class="bl-tag">Инструкция</span>
+        <h3>Как перевести голосовое из Telegram в текст</h3>
+        <p>Быстрый способ превратить голосовое сообщение в читаемый текст за пару минут — без программ и регистрации.</p>
+        <span class="bl-readmore">Читать статью →</span>
+      </a>
+      <a href="blog/kak-rasshifrovat-audio-besplatno.html" class="bl-card reveal delay-1">
+        <span class="bl-tag">Сравнение</span>
+        <h3>Как расшифровать аудио бесплатно</h3>
+        <p>Обзор лучших сервисов транскрибации и как расшифровать запись без оплаты — с таблицей сравнения.</p>
+        <span class="bl-readmore">Читать статью →</span>
+      </a>
+      <a href="blog/chto-takoe-transkribaciya.html" class="bl-card reveal delay-2">
+        <span class="bl-tag">Простыми словами</span>
+        <h3>Что такое транскрибация и зачем она нужна</h3>
+        <p>Объясняем, что такое транскрибация, где она применяется и как сделать конспект встречи или лекции.</p>
+        <span class="bl-readmore">Читать статью →</span>
+      </a>
+    </div>
+    <div class="bl-allbtn">
+      <a href="blog/" class="btn-secondary btn-secondary-lg">Все статьи блога</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     ДЛЯ БИЗНЕСА
+================================================ -->
+<section class="section-business section-pad" id="business">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="eyebrow">Решения</div>
+      <h2 class="section-title reveal">МОЛВИ<br><span class="gradient-text">для бизнеса</span></h2>
+    </div>
+    <div class="business-grid">
+      <div class="business-card reveal">
+        <div class="business-card-icon">🏢</div>
+        <div class="business-card-title">Отдел продаж</div>
+        <ul class="business-card-list">
+          <li>Каждая встреча → задача в CRM</li>
+          <li>Менеджеры не забывают договорённости</li>
+          <li>Руководитель видит каждый контакт</li>
+          <li>Автоматические follow-up уведомления</li>
+        </ul>
+      </div>
+      <div class="business-card reveal delay-1">
+        <div class="business-card-icon">⚖️</div>
+        <div class="business-card-title">Юридические фирмы</div>
+        <ul class="business-card-list">
+          <li>Протоколы консультаций автоматически</li>
+          <li>Соответствие 152-ФЗ, данные в РФ</li>
+          <li>Данные клиентов не уходят за рубеж</li>
+          <li>Стандарт юридической документации</li>
+        </ul>
+      </div>
+      <div class="business-card reveal delay-2">
+        <div class="business-card-icon">🏛</div>
+        <div class="business-card-title">Госсектор</div>
+        <ul class="business-card-list">
+          <li>Госпротокол по ГОСТ Р 7.0.97</li>
+          <li>187-ФЗ (КИИ) — единственные кто подходит</li>
+          <li>On-premise для закрытых контуров</li>
+          <li>Реестр отечественного ПО Минцифры</li>
+        </ul>
+      </div>
+    </div>
+    <div class="business-cta reveal">
+      <a href="#" class="btn-primary business-cta-btn">
+        Обсудить корпоративное решение →
+      </a>
+      <p class="business-cta-sub">Демо · SLA · НДС-документы · Договор 44-ФЗ</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     FAQ
+================================================ -->
+<section class="section-faq section-pad">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="eyebrow">Вопросы и ответы</div>
+      <h2 class="section-title reveal">Ответы<br><span class="gradient-text">на вопросы</span></h2>
+    </div>
+    <div class="faq-list reveal" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ================================================
+     ФИНАЛЬНЫЙ CTA
+================================================ -->
+<section class="section-final-cta">
+  <div class="final-cta-glow"></div>
+  <div class="container">
+    <div class="final-cta-inner reveal">
+      <div class="eyebrow eyebrow-center">Ограниченное предложение</div>
+      <h1 class="final-cta-title">Начните записывать<br><span class="gradient-text">умнее сегодня</span></h1>
+      <p class="final-cta-sub">Устройство + приложение + ИИ. Первые 200 минут (5 встреч) — бесплатно.</p>
+      <div class="final-cta-btns">
+        <a href="https://t.me/steffff13" class="btn-primary-lg" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          Купить устройство
+        </a>
+        <a href="#" class="btn-secondary btn-secondary-lg">Скачать приложение бесплатно</a>
+      </div>
+      <div class="final-trust">
+        <span>🚀 Доставка 1–3 дня</span>
+        <span>🔒 Данные в России</span>
+        <span>✅ Гарантия 12 месяцев</span>
+        <span>💳 Оплата картой РФ</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     FOOTER
+================================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand-logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          </div>
+          <span>МОЛВИ</span>
+        </div>
+        <p class="footer-brand-desc">Российский ИИ-диктофон. Говори — мы запишем и сделаем всё остальное. Данные только в России.</p>
+        <div class="footer-compliance">
+          <span class="comp-badge">152-ФЗ</span>
+          <span class="comp-badge">187-ФЗ</span>
+          <span class="comp-badge">SberCloud</span>
+          <span class="comp-badge">GigaChat</span>
+        </div>
+        <div class="footer-social footer-social-wrap">
+          <a href="#" class="social-btn" title="Telegram" aria-label="Telegram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          </a>
+          <a href="#" class="social-btn" title="ВКонтакте" aria-label="ВКонтакте">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.684 0H8.316C1.592 0 0 1.592 0 8.316v7.368C0 22.408 1.592 24 8.316 24h7.368C22.408 24 24 22.408 24 15.684V8.316C24 1.592 22.408 0 15.684 0zm3.692 17.123h-1.744c-.66 0-.862-.523-2.049-1.713-1.033-1.01-1.49-.994-1.49-.994s-.389-.044-.389.482v1.554c0 .41-.131.655-1.21.655-1.78 0-3.76-1.079-5.144-3.098C5.59 11.35 5.05 8.63 5.05 8.63s-.046-.37.365-.37H7.16c.405 0 .56.178.715.593 0 0 1.044 2.918 2.499 4.553.97 1.083 1.42 1.344 1.42 1.344s.583.16.583-.49v-2.65s-.073-1.222-.558-1.668c-.399-.367-.66-.454-.66-.454-.255-.175.063-.494.442-.494.699 0 1.759.003 2.643.003 1.196 0 1.47.374 1.47 1.246v3.378c0 .375.131.551.232.551.305 0 .783-.33 1.544-1.31 1.16-1.465 1.985-3.732 1.985-3.732.116-.3.372-.582.778-.582h1.745c.525 0 .641.26.524.617-.235.727-1.985 4.02-1.985 4.02-.184.313-.254.42 0 .758.203.261.87.87 1.313 1.398.812.947 1.432 1.74 1.598 2.29.152.547-.145.825-.699.825z"/></svg>
+          </a>
+          <a href="#" class="social-btn" title="YouTube" aria-label="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Продукт</h4>
+        <ul>
+          <li><a href="#">Устройство МОЛВИ</a></li>
+          <li><a href="#">Приложение</a></li>
+          <li><a href="#">Тарифы</a></li>
+          <li><a href="#">Что нового</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Интеграции</h4>
+        <ul>
+          <li><a href="#">AmoCRM</a></li>
+          <li><a href="#">Битрикс24</a></li>
+          <li><a href="#">API</a></li>
+          <li><a href="#">Telegram (скоро)</a></li>
+          <li><a href="#">Notion (скоро)</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Компания</h4>
+        <ul>
+          <li><a href="#">О нас</a></li>
+          <li><a href="#">Блог</a></li>
+          <li><a href="#">Пресс-кит</a></li>
+          <li><a href="#">Вакансии</a></li>
+          <li><a href="#">Партнёрам</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Поддержка</h4>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Документация</a></li>
+          <li><a href="#">Контакты</a></li>
+          <li><a href="#">Доставка и оплата</a></li>
+          <li><a href="#">Гарантия</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 МОЛВИ. Все права защищены.</span>
+      <span>Данные хранятся в России. Соответствует 152-ФЗ.</span>
+      <div class="footer-links-row">
+        <a href="/legal/privacy/" class="footer-link-text">Политика конфиденциальности</a>
+        <a href="/legal/terms/" class="footer-link-text">Условия использования</a>
+        <a href="/legal/offer/" class="footer-link-text">Публичная оферта</a>
+        <a href="/legal/consent/" class="footer-link-text">Согласие на обработку ПДн</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ================================================
+     JAVASCRIPT
+================================================ -->
+<script>
+// ===== NAVBAR SCROLL =====
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+});
+
+// ===== SCENARIOS CAROUSEL (infinite) =====
+(function () {
+  const track    = document.getElementById('scenariosTrack');
+  const viewport = document.getElementById('scenariosViewport');
+  const prevBtn  = document.getElementById('scPrev');
+  const nextBtn  = document.getElementById('scNext');
+  const dotsWrap = document.getElementById('scDots');
+  if (!track) return;
+
+  // Clone all original cards → track becomes [orig 0..8] + [clone 0..8]
+  const originals = Array.from(track.children);
+  const ORIG = originals.length; // 9
+  originals.forEach(c => {
+    const cl = c.cloneNode(true);
+    cl.setAttribute('aria-hidden', 'true');
+    track.appendChild(cl);
+  });
+
+  let current = 0;
+  let busy    = false;
+  const DUR   = 450; // ms — transition duration
+
+  function cardGap() {
+    return parseFloat(window.getComputedStyle(track).gap) || 24;
+  }
+  function offsetFor(idx) {
+    const w = track.children[0].getBoundingClientRect().width;
+    return idx * (w + cardGap());
+  }
+  function setPos(idx, animated) {
+    track.style.transition = animated
+      ? `transform ${DUR}ms cubic-bezier(0.16,1,0.3,1)`
+      : 'none';
+    track.style.transform  = `translateX(-${offsetFor(idx)}px)`;
+  }
+
+  // Dots — one per original card
+  function buildDots() {
+    dotsWrap.innerHTML = '';
+    for (let i = 0; i < ORIG; i++) {
+      const d = document.createElement('button');
+      d.className = 'sc-dot';
+      d.setAttribute('aria-label', `Слайд ${i + 1}`);
+      d.addEventListener('click', () => { goTo(i); resetAuto(); });
+      dotsWrap.appendChild(d);
+    }
+  }
+  function updateDots() {
+    const real = ((current % ORIG) + ORIG) % ORIG;
+    Array.from(dotsWrap.children).forEach((d, i) => d.classList.toggle('active', i === real));
+  }
+
+  function goTo(idx, animated = true) {
+    if (busy && animated) return;
+    busy = animated;
+    current = idx;
+    setPos(current, animated);
+    updateDots();
+    if (animated) {
+      setTimeout(() => {
+        busy = false;
+        // Seamless forward wrap: landed in clone zone → jump to originals
+        if (current >= ORIG) {
+          current -= ORIG;
+          setPos(current, false);
+          updateDots();
+        }
+      }, DUR + 20);
+    }
+  }
+
+  function next() { goTo(current + 1); resetAuto(); }
+  function prev() {
+    if (current === 0) {
+      // Jump to clone-of-last (= ORIG position) silently, then animate left to last original
+      current = ORIG;
+      setPos(current, false);
+      track.getBoundingClientRect(); // force reflow
+      goTo(ORIG - 1);
+    } else {
+      goTo(current - 1);
+    }
+    resetAuto();
+  }
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+  prevBtn.disabled = false;
+  nextBtn.disabled = false;
+
+  // Auto-play (pause on hover / touch)
+  let timer;
+  function startAuto() { timer = setInterval(() => goTo(current + 1), 3800); }
+  function stopAuto()  { clearInterval(timer); }
+  function resetAuto() { stopAuto(); startAuto(); }
+
+  const section = document.getElementById('product');
+  if (section) {
+    section.addEventListener('mouseenter', stopAuto);
+    section.addEventListener('mouseleave', startAuto);
+  }
+
+  // Touch swipe
+  let tx = 0;
+  viewport.addEventListener('touchstart', e => { tx = e.touches[0].clientX; stopAuto(); }, { passive: true });
+  viewport.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    startAuto();
+  }, { passive: true });
+
+  // Init
+  buildDots();
+  setPos(0, false);
+  updateDots();
+  startAuto();
+
+  window.addEventListener('resize', () => setPos(current, false));
+})();
+
+// ===== THEME SWITCH =====
+(function () {
+  const html = document.documentElement;
+  const checkbox = document.getElementById('themeCheckbox');
+  const drawerCheckbox = document.getElementById('drawerThemeCheckbox');
+  const STORAGE_KEY = 'molvi-theme';
+
+  // dark = checked, light = unchecked
+  function applyTheme(isDark) {
+    if (isDark) { html.classList.remove('light'); }
+    else { html.classList.add('light'); }
+    if (checkbox) checkbox.checked = isDark;
+    if (drawerCheckbox) drawerCheckbox.checked = isDark;
+    localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
+  }
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  applyTheme(saved !== 'light');
+
+  if (checkbox) checkbox.addEventListener('change', () => applyTheme(checkbox.checked));
+  if (drawerCheckbox) drawerCheckbox.addEventListener('change', () => applyTheme(drawerCheckbox.checked));
+})();
+
+// ===== MOBILE MENU =====
+function openMobileMenu() {
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', 'true');
+}
+function closeMobileMenu() {
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', 'false');
+}
+document.getElementById('mobileMenuBtn').onclick = openMobileMenu;
+
+// ===== PARALLAX DEVICE =====
+document.addEventListener('mousemove', (e) => {
+  const el = document.getElementById('deviceParallax');
+  if(!el) return;
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const rx = ((e.clientY - cy)/cy) * 6;
+  const ry = ((e.clientX - cx)/cx) * -6;
+  el.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+});
+
+// ===== TYPEWRITER =====
+(function(){
+  const lines = ['МОЛВИ —', 'запишет, расшифрует', 'и составит план'];
+  const ids = ['typewriter-line1','typewriter-line2','typewriter-line3'];
+  // Pre-fill text is in HTML for LCP/SEO; JS animates it after first paint
+  let l=0, c=0;
+  ids.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = ''; });
+  function type(){
+    if(l >= lines.length) return;
+    const el = document.getElementById(ids[l]);
+    if(!el) return;
+    if(c <= lines[l].length){ el.textContent = lines[l].substring(0,c); c++; setTimeout(type,50); }
+    else { l++; c=0; setTimeout(type,180); }
+  }
+  setTimeout(type, 80); // minimal delay — full text was visible on first paint
+})();
+
+// ===== DEVICE TIMER =====
+(function(){
+  let s=0, m=23, h=0;
+  setInterval(()=>{
+    s++; if(s>=60){s=0;m++;} if(m>=60){m=0;h++;}
+    const str=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const el1=document.getElementById('deviceTimer'), el2=document.getElementById('phoneTimer');
+    if(el1)el1.textContent=str; if(el2)el2.textContent=str;
+  },1000);
+})();
+
+// ===== SCROLL REVEAL =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08, rootMargin:'0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ===== COMPARE TABLE =====
+(function(){
+  const rows = [
+    ['Цена устройства','✓','14 500 ₽'],
+    ['Подписка от','от 1 200 ₽/мес ✓','от 8 990 ₽'],
+    ['Хранение данных','🇷🇺 Россия ✓','🇺🇸 США'],
+    ['AmoCRM нативно','✓','✗'],
+    ['Битрикс24 нативно','✓','✗'],
+    ['Госсектор (152-ФЗ)','✓','✗'],
+    ['Язык интерфейса','Русский ✓','Английский'],
+    ['GigaChat','✓','✗'],
+  ];
+  const tbody = document.getElementById('compareBody');
+  const mobileCards = document.getElementById('compareCards');
+
+  rows.forEach((row, ri) => {
+    // Desktop table rows
+    const div = document.createElement('div');
+    div.className = 'compare-row reveal';
+    div.style.transitionDelay = ri * 0.06 + 's';
+    const oursGood = row[1].includes('✓') || row[1].includes('🇷🇺');
+    const theirsBad = row[2] === '✗' || row[2].includes('🇺🇸');
+    div.innerHTML = `
+      <div class="compare-cell">${row[0]}</div>
+      <div class="compare-cell ours" style="color:${oursGood ? '#10B981' : '#60A5FA'}">${row[1]}</div>
+      <div class="compare-cell theirs" style="color:${theirsBad ? 'var(--text-muted)' : ''}">${row[2]}</div>`;
+    tbody.appendChild(div);
+    observer.observe(div);
+
+    // Mobile stacked cards
+    if (mobileCards) {
+      const card = document.createElement('div');
+      card.className = 'compare-mobile-card reveal';
+      card.style.transitionDelay = ri * 0.06 + 's';
+      card.innerHTML = `
+        <div class="compare-mobile-card-title">${row[0]}</div>
+        <div class="compare-mobile-row">
+          <span class="compare-mobile-brand">
+            <span class="compare-mobile-logo ours">🇷🇺 МОЛВИ</span>
+            <span class="compare-mobile-val ${oursGood ? 'good' : ''}">${row[1]}</span>
+          </span>
+        </div>
+        <div class="compare-mobile-row">
+          <span class="compare-mobile-brand">
+            <span class="compare-mobile-logo theirs">PLAUD</span>
+            <span class="compare-mobile-val ${theirsBad ? 'bad' : ''}">${row[2]}</span>
+          </span>
+        </div>`;
+      mobileCards.appendChild(card);
+      observer.observe(card);
+    }
+  });
+})();
+
+// ===== APP TABS =====
+function switchAppTab(idx) {
+  document.querySelectorAll('.app-tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === idx);
+    b.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+  });
+  document.querySelectorAll('.app-tab-content').forEach((c,i) => c.classList.toggle('active', i === idx));
+  // Phone screen tabs: use direct display control per content type
+  const phoneScreens = [
+    { el: document.getElementById('phoneTab0'), display: 'flex' },
+    { el: document.getElementById('phoneTab1'), display: 'block' },
+    { el: document.getElementById('phoneTab2'), display: 'block' },
+  ];
+  phoneScreens.forEach(({ el, display }, i) => {
+    if (el) el.style.display = i === idx ? display : 'none';
+  });
+}
+
+// ===== FAQ =====
+function toggleFaq(qEl){
+  const item = qEl.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => {
+    el.classList.remove('open');
+    const btn = el.querySelector('.faq-question');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  });
+  if (!wasOpen) {
+    item.classList.add('open');
+    qEl.setAttribute('aria-expanded', 'true');
+  }
+}
+const faqData = [
+  {q:'Мои данные точно остаются в России?',a:'Да. 100%. Аудио хранится на SberCloud Object Storage — серверы в России. Транскрибация — SaluteSpeech (Россия). ИИ-обработка — GigaChat (Россия). Мы не передаём данные ни в OpenAI, ни в Anthropic, ни в какие зарубежные сервисы. Это юридически обязывающее условие наших сервисных соглашений.'},
+  {q:'Чем МОЛВИ лучше PLAUD?',a:'На 40% дешевле. Данные в России (PLAUD — в США). Нативная интеграция с AmoCRM и Битрикс24 (у PLAUD нет). GigaChat понимает русский язык лучше. 50+ русских шаблонов. Единственный легальный выбор для госсектора и компаний с требованиями 152-ФЗ.'},
+  {q:'Нужно ли подключение к интернету?',a:'Запись работает офлайн — устройство сохраняет всё локально на 64 ГБ встроенной памяти. Транскрибация и ИИ-обработка требуют интернета. При появлении связи — автоматическая синхронизация с облаком.'},
+  {q:'Как работает AmoCRM-интеграция?',a:'Подключаете свой аккаунт в настройках (OAuth за 1 клик). После каждой встречи — МОЛВИ автоматически создаёт примечание в нужной карточке клиента с протоколом и задачами. Время: 2–5 минут после окончания записи.'},
+  {q:'Можно ли использовать в госструктурах?',a:'Да. МОЛВИ соответствует 152-ФЗ (персональные данные), 187-ФЗ (КИИ). Мы в процессе внесения в Реестр отечественного ПО Минцифры. Для закрытых контуров — On-premise версия без выхода в интернет.'},
+  {q:'Что если телефон сломается — записи сохранятся?',a:'Записи хранятся на 64 ГБ устройства + синхронизируются в SberCloud. Доступ с любого устройства через приложение после авторизации. Данные не потеряются.'},
+  {q:'На каких телефонах работает?',a:'iOS 15+ и Android 10+. Приложение работает и без физического устройства — телефон сам записывает через микрофон.'},
+  {q:'Как быстро приходит посылка?',a:'1–3 рабочих дня по Москве и области, 3–7 дней по России через СДЭК или Почту России. Трекинг отправляется на email сразу после отправки.'},
+];
+const faqList = document.getElementById('faqList');
+faqData.forEach((item,i)=>{
+  const div = document.createElement('div');
+  div.className='faq-item reveal';
+  div.style.transitionDelay=i*0.05+'s';
+  div.innerHTML=`
+    <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-${i}">
+      <span>${item.q}</span>
+      <div class="faq-arrow" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </button>
+    <div class="faq-answer" id="faq-answer-${i}" role="region">${item.a}</div>`;
+  faqList.appendChild(div);
+  observer.observe(div);
+});
+// toggleFaq is defined above faqData
+
+// Observe all initially added reveals
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// ===== ANIMATED COUNTERS =====
+(function(){
+  const counters = document.querySelectorAll('.metric-num[data-count]');
+  if(!counters.length) return;
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(!entry.isIntersecting) return;
+      const el = entry.target;
+      const target = parseInt(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const duration = 1400;
+      const start = performance.now();
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if(progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+      counterObserver.unobserve(el);
+    });
+  }, { threshold: 0.6 });
+  counters.forEach(el => counterObserver.observe(el));
+})();
+</script>
+<script src="/cookie.js" defer></script>
+</body>
+</html>

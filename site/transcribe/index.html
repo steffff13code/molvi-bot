@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SEO -->
+<title>Расшифровка аудио в текст онлайн — транскрибация в Telegram | МОЛВИ</title>
+<meta name="description" content="Переведите аудио, голосовые и видео в текст за минуты в боте МОЛВИ. Пунктуация, спикеры, краткое содержание. Первые минуты бесплатно. Серверы в России.">
+<meta name="keywords" content="расшифровка аудио в текст, транскрибация, аудио в текст онлайн, перевести аудио в текст, расшифровка интервью, расшифровка совещаний, транскрибация лекций, расшифровка записи с диктофона">
+<link rel="canonical" href="https://molvi-ai.ru/transcribe/">
+
+<!-- Подключение верификации поисковиков (вставьте коды после регистрации) -->
+<!-- <meta name="yandex-verification" content="ВАШ_КОД"> -->
+<!-- <meta name="google-site-verification" content="ВАШ_КОД"> -->
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Расшифровка аудио в текст за минуты — бот МОЛВИ">
+<meta property="og:description" content="Закиньте запись в Telegram-бот МОЛВИ — получите готовый текст с пунктуацией и кратким содержанием. Первые минуты бесплатно. Серверы в России.">
+<meta property="og:url" content="https://molvi-ai.ru/transcribe/">
+<meta property="og:image" content="https://molvi-ai.ru/og-transcribe.png">
+<meta property="og:site_name" content="МОЛВИ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Расшифровка аудио в текст за минуты — бот МОЛВИ">
+<meta name="twitter:description" content="Аудио, голосовые и видео в текст с пунктуацией и кратким содержанием. Первые минуты бесплатно.">
+<meta name="twitter:image" content="https://molvi-ai.ru/og-transcribe.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: { extend: { colors: {
+    "background": "#080C14", "surface": "#0E1420", "primary": "#2563EB",
+    "on-surface": "#e2e5ef", "on-surface-variant": "#8B9EC0", "accent-border": "#1E2D4A"
+  } } }
+}
+</script>
+
+<!-- Schema.org: SoftwareApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "МОЛВИ — расшифровка аудио в текст",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Telegram",
+  "url": "https://molvi-ai.ru/transcribe/",
+  "description": "Telegram-бот для расшифровки аудио, голосовых и видео в текст с пунктуацией, разделением на спикеров и кратким содержанием. Серверы в России, соответствие 152-ФЗ.",
+  "inLanguage": "ru",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "RUB",
+    "description": "Первые 30 минут расшифровки бесплатно"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "ratingCount": "127"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "МОЛВИ",
+    "url": "https://molvi-ai.ru/"
+  }
+}
+</script>
+
+<!-- Schema.org: FAQPage -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Как перевести голосовое из Telegram в текст?","acceptedAnswer":{"@type":"Answer","text":"Перешлите голосовое сообщение в бот МОЛВИ (@molviai_bot) — через пару минут получите готовый текст с пунктуацией. Ничего устанавливать не нужно."}},
+    {"@type":"Question","name":"Как расшифровать аудио бесплатно онлайн?","acceptedAnswer":{"@type":"Answer","text":"Первые 30 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись."}},
+    {"@type":"Question","name":"Сколько стоит расшифровать час аудио?","acceptedAnswer":{"@type":"Answer","text":"От 75 ₽ за 1 час. Пакеты: 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч). Без подписки."}},
+    {"@type":"Question","name":"Как расшифровать запись с диктофона?","acceptedAnswer":{"@type":"Answer","text":"Отправьте аудиофайл с диктофона (MP3, WAV, M4A и др.) в бот МОЛВИ. Результат — текст с кратким содержанием, можно скачать в TXT, PDF или DOCX."}},
+    {"@type":"Question","name":"Безопасно ли загружать конфиденциальные записи?","acceptedAnswer":{"@type":"Answer","text":"Да. Аудиофайл удаляется сразу после расшифровки — мы его не храним. Серверы в России, соответствие 152-ФЗ."}},
+    {"@type":"Question","name":"Какие форматы аудио и видео поддерживаются?","acceptedAnswer":{"@type":"Answer","text":"Аудио: MP3, WAV, OGG, M4A, FLAC, AAC, Opus. Видео: MP4, MOV, MKV, WEBM. Голосовые из Telegram и WhatsApp — просто перешлите в бот."}}
+  ]
+}
+</script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{font-family:'Inter',-apple-system,sans-serif;background:#080C14;color:#F0F4FF;line-height:1.7}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+ul{list-style:none}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+
+:root{
+  --bg:#080C14;--surface:#0E1420;--surface-elevated:#141C2E;--border:#1E2D4A;
+  --accent:#2563EB;--cyan:#06B6D4;--text:#F0F4FF;--text-sec:#8B9EC0;--text-muted:#64748B;
+  --success:#10B981;--warning:#F59E0B;--radius-card:16px;--radius-btn:12px;--radius-pill:999px;--nav-h:68px;
+}
+:root.light{
+  --bg:#F4F6FB;--surface:#FFFFFF;--surface-elevated:#EEF1F8;--border:#D0D8EC;
+  --accent:#2563EB;--cyan:#0891B2;--text:#0D1526;--text-sec:#3A4E70;--text-muted:#6B7280;--success:#059669;
+}
+:root.light body{background:var(--bg);color:var(--text)}
+
+.container{max-width:1240px;margin:0 auto;padding:0 24px}
+.section-pad{padding:96px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.3);color:#60A5FA;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:var(--radius-pill);margin-bottom:20px}
+.section-title{font-size:clamp(1.9rem,4.5vw,3.4rem);font-weight:900;letter-spacing:-0.04em;line-height:1.07;color:var(--text)}
+.section-sub{font-size:17px;color:var(--text-sec);line-height:1.7;margin-top:14px;max-width:620px}
+.section-sub-center{margin-left:auto;margin-right:auto}
+.gradient-text{background:linear-gradient(135deg,#2563EB 0%,#06B6D4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;padding:14px 28px;border-radius:var(--radius-btn);transition:background .2s,transform .15s,box-shadow .2s;min-height:48px;white-space:nowrap}
+.btn-primary:hover{background:#1D4ED8;transform:translateY(-1px);box-shadow:0 0 32px rgba(37,99,235,0.45)}
+.btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--text-sec);font-size:15px;font-weight:600;padding:13px 26px;border-radius:var(--radius-btn);border:1px solid var(--border);transition:border-color .2s,background .2s,color .2s;min-height:48px;white-space:nowrap}
+.btn-secondary:hover{border-color:var(--accent);background:rgba(37,99,235,0.07);color:var(--text)}
+.btn-lg{font-size:16px;padding:16px 34px;min-height:54px}
+
+.glass{background:rgba(14,20,32,0.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:var(--radius-card);transition:transform .3s cubic-bezier(.16,1,.3,1),border-color .25s}
+.glass:hover{border-color:rgba(37,99,235,0.5);transform:translateY(-4px)}
+:root.light .glass{background:rgba(255,255,255,0.9)}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal.delay-1{transition-delay:.1s}.reveal.delay-2{transition-delay:.2s}.reveal.delay-3{transition-delay:.3s}
+
+/* NAVBAR */
+nav.navbar{position:sticky;top:0;z-index:1000;background:transparent;transition:background .35s,border-color .35s,box-shadow .35s}
+nav.navbar.scrolled{background:rgba(8,12,20,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:0 4px 32px rgba(0,0,0,0.4)}
+:root.light nav.navbar.scrolled{background:rgba(244,246,251,0.92);box-shadow:0 4px 32px rgba(0,0,0,0.08)}
+.nav-inner{max-width:1240px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:var(--nav-h);gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.nav-logo .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center}
+.nav-logo .logo-icon svg{width:20px;height:20px;color:#fff}
+.nav-logo span{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--text)}
+.nav-links{display:flex;align-items:center;justify-content:center;gap:4px}
+.nav-link{color:var(--text-sec);font-size:14px;font-weight:500;padding:8px 14px;border-radius:8px;transition:color .2s,background .2s;white-space:nowrap;min-height:44px;display:inline-flex;align-items:center}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;justify-self:end}
+.nav-mobile-btn{display:none;color:var(--text-sec);padding:8px;min-width:44px;min-height:44px;justify-content:center;align-items:center}
+
+/* theme switch (compact) */
+.theme-switch{position:relative;width:48px;height:28px;flex-shrink:0;cursor:pointer}
+.theme-switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.theme-switch-track{position:absolute;inset:0;background:var(--surface-elevated);border:1px solid var(--border);border-radius:999px;transition:background .25s}
+.theme-switch-thumb{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--accent);transition:transform .25s}
+.theme-switch input:checked ~ .theme-switch-thumb{transform:translateX(20px)}
+
+/* HERO */
+.hero{position:relative;padding:72px 0 80px;overflow:hidden}
+.hero-grid-bg{position:absolute;inset:0;background-color:var(--bg);background-image:linear-gradient(to right,rgba(37,99,235,0.08) 1px,transparent 1px),linear-gradient(to bottom,rgba(37,99,235,0.08) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 0%,#000 40%,transparent 100%);mask-image:radial-gradient(ellipse 70% 60% at 50% 0%,#000 40%,transparent 100%)}
+.hero-inner{position:relative;z-index:1;text-align:center;max-width:860px;margin:0 auto}
+.hero h1{font-size:clamp(2.1rem,6vw,4rem);font-weight:900;letter-spacing:-0.045em;line-height:1.05;color:var(--text)}
+.hero-sub{font-size:clamp(16px,2.4vw,20px);color:var(--text-sec);margin:22px auto 30px;max-width:680px}
+.hero-cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.hero-trust{display:flex;gap:10px 24px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-size:14px;color:var(--text-sec)}
+.hero-trust span{display:inline-flex;align-items:center;gap:7px}
+
+/* cards / grids */
+.grid-auto{display:grid;gap:20px}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-2{grid-template-columns:repeat(2,1fr)}
+.card{padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);transition:transform .3s,border-color .25s}
+.card:hover{transform:translateY(-4px);border-color:rgba(37,99,235,0.5)}
+.card-icon{width:48px;height:48px;border-radius:12px;background:rgba(37,99,235,0.12);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.card h3{font-size:19px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:-0.02em}
+.card p{font-size:15px;color:var(--text-sec)}
+.card-cta{display:inline-flex;align-items:center;gap:6px;margin-top:14px;color:#60A5FA;font-weight:600;font-size:14px}
+
+.step-num{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+
+.section-alt{background:var(--surface)}
+:root.light .section-alt{background:var(--surface)}
+
+.center{text-align:center}
+.mb-head{margin-bottom:52px}
+
+/* pricing */
+.price-wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:stretch}
+.price-free{padding:40px;border-radius:var(--radius-card);background:linear-gradient(135deg,rgba(37,99,235,0.14),rgba(6,182,212,0.10));border:1px solid rgba(37,99,235,0.4)}
+.price-free .big{font-size:clamp(2.4rem,6vw,3.6rem);font-weight:900;letter-spacing:-0.04em;color:var(--text);line-height:1}
+.price-paid{padding:40px;border-radius:var(--radius-card);background:var(--surface);border:1px solid var(--border)}
+.price-paid .rate{font-size:32px;font-weight:900;color:var(--text)}
+.price-list li{display:flex;gap:10px;align-items:flex-start;color:var(--text-sec);font-size:15px;margin-top:12px}
+.price-value-note{margin-top:22px;padding:16px 18px;border-radius:12px;background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.3);color:var(--text);font-size:15px;font-weight:600}
+
+/* device band */
+.device-band{background:linear-gradient(135deg,rgba(37,99,235,0.12),rgba(6,182,212,0.08));border:1px solid var(--border);border-radius:24px;padding:48px;text-align:center}
+
+/* FAQ */
+.faq-list{max-width:760px;margin:48px auto 0;display:flex;flex-direction:column;gap:2px}
+.faq-item{border-bottom:1px solid var(--border);padding:8px 0}
+.faq-item.open{border-color:rgba(37,99,235,0.4)}
+.faq-question{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;font-size:16px;font-weight:600;color:var(--text);min-height:44px}
+.faq-question:hover{color:#60A5FA}
+.faq-arrow{width:30px;height:30px;border-radius:8px;background:rgba(37,99,235,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .25s,background .25s}
+.faq-item.open .faq-arrow{transform:rotate(180deg);background:rgba(37,99,235,0.2)}
+.faq-answer{max-height:0;overflow:hidden;color:var(--text-sec);font-size:15px;transition:max-height .3s ease,padding-bottom .3s ease}
+.faq-item.open .faq-answer{max-height:400px;padding-bottom:20px}
+
+/* final cta */
+.final-cta{position:relative;text-align:center;padding:96px 0}
+.final-cta h2{font-size:clamp(2rem,5vw,3.4rem);font-weight:900;letter-spacing:-0.04em;line-height:1.07;color:var(--text)}
+
+/* footer */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:48px 0 32px}
+.footer-top{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;margin-bottom:28px}
+.footer-brand{max-width:300px}
+.footer-brand .nav-logo{margin-bottom:14px}
+.footer-brand p{font-size:13px;color:var(--text-muted);line-height:1.7}
+.footer-links{display:flex;gap:48px;flex-wrap:wrap}
+.footer-col h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.06em}
+.footer-col ul{display:flex;flex-direction:column;gap:10px}
+.footer-col a{font-size:13px;color:var(--text-muted);transition:color .2s}
+.footer-col a:hover{color:var(--text-sec)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--text-muted)}
+.comp-badge{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.3);color:#60A5FA;font-size:11px;font-weight:600;margin-right:6px}
+
+/* MOBILE DRAWER */
+.mobile-drawer{position:fixed;inset:0 0 0 auto;width:min(86vw,340px);background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);z-index:2000;padding:20px;display:flex;flex-direction:column;gap:8px}
+.mobile-drawer.open{transform:translateX(0)}
+.mobile-drawer-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mobile-nav a{display:block;padding:14px 8px;color:var(--text);font-size:16px;font-weight:600;border-bottom:1px solid var(--border)}
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);opacity:0;visibility:hidden;transition:opacity .3s;z-index:1999}
+.drawer-backdrop.open{opacity:1;visibility:visible}
+.drawer-cta{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+
+/* RESPONSIVE */
+@media (max-width:900px){
+  .nav-links{display:none}
+  .nav-mobile-btn{display:inline-flex}
+  .nav-actions .btn-secondary,.nav-actions .nav-desktop-cta{display:none}
+  .cols-3{grid-template-columns:1fr}
+  .cols-2{grid-template-columns:1fr}
+  .price-wrap{grid-template-columns:1fr}
+  .section-pad{padding:64px 0}
+  .device-band{padding:32px 20px}
+}
+@media (min-width:901px){ .mobile-drawer,.drawer-backdrop{display:none} }
+@media (max-width:560px){
+  .container{padding:0 18px}
+  .hero{padding:48px 0 56px}
+  .btn-primary,.btn-secondary{width:100%}
+  .hero-cta-row{flex-direction:column}
+}
+</style>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#top" class="nav-logo" aria-label="МОЛВИ — на главную лендинга">
+      <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></div>
+      <span>МОЛВИ</span>
+    </a>
+    <div class="nav-links">
+      <a href="#how" class="nav-link">Как это работает</a>
+      <a href="#templates" class="nav-link">Шаблоны</a>
+      <a href="#pricing" class="nav-link">Тарифы</a>
+      <a href="#blog" class="nav-link">Блог</a>
+    </div>
+    <div class="nav-actions">
+      <label class="theme-switch" aria-label="Переключить тему">
+        <input type="checkbox" id="themeCheckbox" autocomplete="off" aria-label="Тёмная тема">
+        <div class="theme-switch-track"></div>
+        <div class="theme-switch-thumb"></div>
+      </label>
+      <a href="https://molvi-ai.ru/" class="btn-secondary">🛒 Купить AI-диктофон</a>
+      <a href="https://t.me/molviai_bot" class="btn-primary nav-desktop-cta" target="_blank" rel="noopener">Расшифровать аудио</a>
+      <button class="nav-mobile-btn" id="mobileMenuBtn" aria-label="Открыть меню" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeMobileMenu()"></div>
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <div class="nav-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><span>МОЛВИ</span></div>
+    <button onclick="closeMobileMenu()" aria-label="Закрыть меню" style="color:var(--text-sec);padding:8px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <nav class="mobile-nav">
+    <a href="#how" onclick="closeMobileMenu()">Как это работает</a>
+    <a href="#pricing" onclick="closeMobileMenu()">Тарифы</a>
+    <a href="#blog" onclick="closeMobileMenu()">Блог</a>
+  </nav>
+  <div class="drawer-cta">
+    <a href="https://t.me/molviai_bot" class="btn-primary" target="_blank" rel="noopener" onclick="closeMobileMenu()">🎙 Расшифровать аудио</a>
+    <a href="https://molvi-ai.ru/" class="btn-secondary" onclick="closeMobileMenu()">🛒 Купить AI-диктофон</a>
+  </div>
+</div>
+
+<!-- ===== 1. HERO ===== -->
+<header class="hero" id="top">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="eyebrow">🎙 Расшифровка в Telegram · без программ</div>
+      <h1>Расшифровка аудио в текст онлайн — <span class="gradient-text">транскрибация в Telegram за минуты</span></h1>
+      <p class="hero-sub">Закиньте запись в бот МОЛВИ — получите готовый текст с пунктуацией и кратким содержанием. Без регистрации, без программ, на русском. Первые 30 минут — бесплатно.</p>
+      <div class="hero-cta-row">
+        <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">Расшифровать аудио бесплатно</a>
+      </div>
+      <div class="hero-trust">
+        <span>💰 От 75 ₽/час</span>
+        <span>⚡ Час записи за 3 минуты</span>
+        <span>🚫 Без подписки</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 2. HOW IT WORKS ===== -->
+<section class="section-pad" id="how">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow">Как это работает</div>
+      <h2 class="section-title">Как перевести аудио в текст: 3 шага</h2>
+    </div>
+    <div class="grid-auto cols-3">
+      <div class="card reveal">
+        <div class="step-num">1</div>
+        <h3>Откройте бот</h3>
+        <p>Откройте Telegram-бот <b>@molviai_bot</b> — он уже готов к работе, ничего устанавливать не нужно.</p>
+      </div>
+      <div class="card reveal delay-1">
+        <div class="step-num">2</div>
+        <h3>Отправьте запись</h3>
+        <p>Пришлите аудио, голосовое или видео. Можно переслать голосовое прямо из любого чата.</p>
+      </div>
+      <div class="card reveal delay-2">
+        <div class="step-num">3</div>
+        <h3>Получите текст</h3>
+        <p>Через пару минут — готовый текст с пунктуацией и краткое содержание. Скачайте в TXT, PDF или DOCX.</p>
+      </div>
+    </div>
+    <div class="center" style="margin-top:36px">
+      <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">Открыть бот</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2.5 ШАБЛОНЫ САММАРИ ===== -->
+<section class="section-pad" id="templates">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow eyebrow-center">Шаблоны саммари</div>
+      <h2 class="section-title">Саммари и шаблон под задачу — <span class="gradient-text">не просто расшифровка</span></h2>
+      <p class="section-sub section-sub-center" style="margin:14px auto 0">Выберите формат — и бот соберёт саммари под ваш сценарий. 8 готовых шаблонов плюс обычная расшифровка.</p>
+    </div>
+    <div class="grid-auto cols-3">
+      <div class="card reveal"><div class="card-icon">📋</div><h3>Протокол встречи</h3><p>Тема, участники, решения, задачи «кто — что — срок», следующие шаги.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">📞</div><h3>Звонок / переговоры</h3><p>Суть, договорённости, открытые вопросы, что сделать и кому, итог.</p></div>
+      <div class="card reveal delay-2"><div class="card-icon">🎓</div><h3>Конспект лекции</h3><p>Тезисы, термины с определениями, примеры и главный вывод.</p></div>
+      <div class="card reveal"><div class="card-icon">⚖️</div><h3>Юридическая консультация</h3><p>Суть вопроса, правовая позиция, риски, рекомендации, следующий шаг.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">🧑‍💼</div><h3>Собеседование</h3><p>Карточка кандидата: опыт, сильные стороны, сомнения, впечатление.</p></div>
+      <div class="card reveal delay-2"><div class="card-icon">🎙</div><h3>Интервью</h3><p>Тезисы, 3–5 ярких цитат, варианты заголовков и инфоповодов.</p></div>
+      <div class="card reveal"><div class="card-icon">🧠</div><h3>Личная заметка</h3><p>Главная мысль, идеи списком, to-do и вопросы к себе.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">💬</div><h3>Сессия с психологом</h3><p>Бережное нейтральное резюме: темы, инсайты, к чему вернуться.</p></div>
+      <div class="card reveal delay-2"><div class="card-icon">🎧</div><h3>Просто расшифровка</h3><p>Полный текст + короткое нейтральное саммари в 3–5 пунктах.</p></div>
+    </div>
+    <div class="center" style="margin-top:36px">
+      <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">Попробовать шаблоны в боте</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 3. PAINS / SCENARIOS ===== -->
+<section class="section-pad section-alt" id="scenarios">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow">Кому подходит</div>
+      <h2 class="section-title">Расшифровка интервью, лекций и совещаний — <span class="gradient-text">час записи за 3 минуты.</span></h2>
+    </div>
+    <div class="grid-auto cols-3">
+      <div class="card reveal">
+        <div class="card-icon">🎤</div>
+        <h3>Журналистам — расшифровка интервью</h3>
+        <p>Расшифровка интервью и пресс-конференций в текст — цитаты под рукой за минуты, а не за вечер.</p>
+        <a href="https://t.me/molviai_bot" class="card-cta" target="_blank" rel="noopener">Расшифровать интервью →</a>
+      </div>
+      <div class="card reveal delay-1">
+        <div class="card-icon">🎓</div>
+        <h3>Студентам — транскрибация лекций</h3>
+        <p>Транскрибация лекций и семинаров. Готовый конспект с ключевыми тезисами вместо часов переписывания.</p>
+        <a href="https://t.me/molviai_bot" class="card-cta" target="_blank" rel="noopener">Расшифровать лекцию →</a>
+      </div>
+      <div class="card reveal delay-2">
+        <div class="card-icon">💼</div>
+        <h3>Бизнесу — расшифровка совещаний</h3>
+        <p>Расшифровка совещаний и созвонов с задачами и решениями. Протокол встречи готов сразу.</p>
+        <a href="https://t.me/molviai_bot" class="card-cta" target="_blank" rel="noopener">Расшифровать совещание →</a>
+      </div>
+      <div class="card reveal">
+        <div class="card-icon">⚖️</div>
+        <h3>Юристам — расшифровка заседаний</h3>
+        <p>Расшифровка заседаний и переговоров с точными формулировками и таймкодами.</p>
+        <a href="https://t.me/molviai_bot" class="card-cta" target="_blank" rel="noopener">Расшифровать заседание →</a>
+      </div>
+      <div class="card reveal delay-1">
+        <div class="card-icon">🎧</div>
+        <h3>Контент-мейкерам</h3>
+        <p>Подкасты в текст, субтитры и расшифровка записи с диктофона — для статей, постов и нарезок.</p>
+        <a href="https://t.me/molviai_bot" class="card-cta" target="_blank" rel="noopener">Расшифровать подкаст →</a>
+      </div>
+      <div class="card reveal delay-2" style="display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,rgba(37,99,235,0.14),rgba(6,182,212,0.10));border-color:rgba(37,99,235,0.4)">
+        <h3 style="font-size:22px">Ваш случай тоже подойдёт</h3>
+        <p>Любая речь на русском — в чистый текст.</p>
+        <a href="https://t.me/molviai_bot" class="btn-primary" style="margin-top:16px" target="_blank" rel="noopener">Попробовать бесплатно</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. WHAT MOLVI CAN DO ===== -->
+<section class="section-pad" id="features">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow">Возможности</div>
+      <h2 class="section-title">Возможности сервиса транскрибации аудио</h2>
+    </div>
+    <div class="grid-auto cols-3">
+      <div class="card reveal"><div class="card-icon">✍️</div><h3>Пунктуация и абзацы</h3><p>Не «поток слов», а читаемый текст с запятыми, точками и абзацами.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">👥</div><h3>Разделение на спикеров</h3><p>Понятно, кто что сказал — реплики размечены по говорящим.</p></div>
+      <div class="card reveal delay-2"><div class="card-icon">⏱️</div><h3>Таймкоды</h3><p>Метки времени, чтобы быстро найти нужный момент в записи.</p></div>
+      <div class="card reveal"><div class="card-icon">📋</div><h3>Краткое содержание</h3><p>Саммари и ключевые тезисы автоматически — на технологии GigaChat.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">📄</div><h3>Экспорт в файлы</h3><p>Скачайте результат в TXT, PDF или DOCX — удобно для отчётов и архива.</p></div>
+      <div class="card reveal delay-2"><div class="card-icon">✅</div><h3>Задачи и план</h3><p>Извлечём поручения и составим структурированный план встречи.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. FORMATS & SOURCES ===== -->
+<section class="section-pad section-alt" id="formats">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow">Форматы и источники</div>
+      <h2 class="section-title">Форматы аудио и видео для расшифровки</h2>
+      <p class="section-sub section-sub-center">Аудиофайлы, видео и голосовые сообщения — из мессенджеров и с диктофона.</p>
+    </div>
+    <div class="grid-auto cols-2" style="max-width:880px;margin:0 auto">
+      <div class="card reveal"><div class="card-icon">🎵</div><h3>Аудио</h3><p>MP3, WAV, OGG, M4A, FLAC, AAC, Opus и другие.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">🎬</div><h3>Видео</h3><p>MP4, MOV, MKV, WEBM — извлечём дорожку и расшифруем.</p></div>
+      <div class="card reveal"><div class="card-icon">💬</div><h3>Голосовые</h3><p>Голосовые из Telegram и WhatsApp — просто перешлите в бот.</p></div>
+      <div class="card reveal delay-1"><div class="card-icon">🎙️</div><h3>С диктофона</h3><p>Записи с любого диктофона и смартфона — отправьте файлом.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. TRUST / SECURITY ===== -->
+<section class="section-pad" id="security">
+  <div class="container">
+    <div class="glass" style="padding:48px;max-width:980px;margin:0 auto">
+      <div class="center reveal">
+        <div class="eyebrow">Безопасность · 152-ФЗ</div>
+        <h2 class="section-title">Ваши данные не покидают Россию</h2>
+        <p class="section-sub section-sub-center">Работаем на технологиях Сбера (SaluteSpeech). Данные обрабатываются на серверах в России, в соответствии с 152-ФЗ. Мы не храним и не используем ваши записи.</p>
+      </div>
+      <div class="grid-auto cols-3" style="margin-top:32px">
+        <div class="card reveal"><div class="card-icon">🇷🇺</div><h3>Серверы в России</h3><p>Распознавание SaluteSpeech и обработка GigaChat — внутри РФ.</p></div>
+        <div class="card reveal delay-1"><div class="card-icon">🗑️</div><h3>Не храним файлы</h3><p>Аудио удаляется после обработки — оно нам не нужно.</p></div>
+        <div class="card reveal delay-2"><div class="card-icon">📜</div><h3>Соответствие 152-ФЗ</h3><p>Легально для бизнеса, госсектора и работы с перс. данными.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. PRICING ===== -->
+<section class="section-pad section-alt" id="pricing">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow">Тарифы</div>
+      <h2 class="section-title">Просто. Прозрачно.<br><span class="gradient-text">Первые минуты — бесплатно.</span></h2>
+    </div>
+    <div class="price-wrap reveal" style="max-width:980px;margin:0 auto">
+      <div class="price-free">
+        <div class="eyebrow" style="background:rgba(16,185,129,0.14);border-color:rgba(16,185,129,0.4);color:var(--success)">Бесплатно</div>
+        <div class="big">30 минут</div>
+        <p style="color:var(--text-sec);margin-top:10px">расшифровки бесплатно — попробуйте прямо сейчас. Без карты и регистрации.</p>
+        <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" style="margin-top:24px;width:100%" target="_blank" rel="noopener">Начать бесплатно</a>
+      </div>
+      <div class="price-paid">
+        <div class="eyebrow">Платные пакеты</div>
+        <div class="rate">от 50 ₽<span style="font-size:16px;color:var(--text-sec);font-weight:600">/час</span></div>
+        <ul class="price-list" style="margin-bottom:14px">
+          <li>1 ч — <b>75 ₽</b></li>
+          <li>5 ч — <b>365 ₽</b> <span style="color:var(--text-sec);font-size:13px">(73 ₽/ч)</span></li>
+          <li>10 ч — <b>699 ₽</b> <span style="color:var(--text-sec);font-size:13px">(70 ₽/ч)</span></li>
+          <li>30 ч — <b>1 799 ₽</b> <span style="color:var(--text-sec);font-size:13px">(60 ₽/ч)</span></li>
+          <li>🔥 50 ч — <b>2 499 ₽</b> <span style="color:var(--text-sec);font-size:13px">(50 ₽/ч)</span></li>
+        </ul>
+        <ul class="price-list">
+          <li>✓ 8 шаблонов саммари — протокол, лекция, интервью и др.</li>
+          <li>✓ Пунктуация, саммари и экспорт включены</li>
+        </ul>
+        <div class="price-value-note">💡 Час записи — от 75 ₽ вместо 6 часов вашей работы.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. DEVICE BAND ===== -->
+<section class="section-pad" id="device">
+  <div class="container">
+    <div class="device-band reveal">
+      <div class="eyebrow">Экосистема МОЛВИ</div>
+      <h2 class="section-title">МОЛВИ — это ещё и AI-диктофон</h2>
+      <p class="section-sub section-sub-center" style="margin-left:auto;margin-right:auto">Записывайте встречи на наш диктофон — расшифровка автоматически придёт в этот бот. Одно устройство, и больше никакой ручной работы с записями.</p>
+      <div style="margin-top:28px">
+        <a href="https://molvi-ai.ru/" class="btn-primary btn-lg">🛒 Купить диктофон</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 9. FAQ ===== -->
+<section class="section-pad section-alt" id="faq">
+  <div class="container">
+    <div class="center reveal">
+      <div class="eyebrow">Вопросы и ответы</div>
+      <h2 class="section-title">Частые вопросы</h2>
+    </div>
+    <div class="faq-list" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ===== 10. FINAL CTA ===== -->
+<section class="final-cta">
+  <div class="container">
+    <div class="reveal">
+      <div class="eyebrow eyebrow-center">Готовы попробовать?</div>
+      <h2>Расшифруйте первую запись<br><span class="gradient-text">прямо сейчас</span></h2>
+      <p class="section-sub section-sub-center" style="margin:18px auto 32px">Первые 30 минут — бесплатно. Без регистрации и программ.</p>
+      <a href="https://t.me/molviai_bot" class="btn-primary btn-lg" target="_blank" rel="noopener">🎙 Расшифровать аудио бесплатно</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 11. БЛОГ (встроенный блок) ===== -->
+<section class="section-pad section-alt" id="blog">
+  <div class="container">
+    <div class="center mb-head reveal">
+      <div class="eyebrow eyebrow-center">Блог</div>
+      <h2 class="section-title">Полезные статьи <span class="gradient-text">о расшифровке аудио</span></h2>
+      <p class="section-sub section-sub-center" style="margin:14px auto 0">Как перевести голос в текст, что такое транскрибация и как делать это быстро.</p>
+    </div>
+    <div class="grid-auto cols-3">
+      <a href="/blog/kak-perevesti-golosovoe-v-tekst.html" class="card reveal" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
+        <div class="card-icon">🎤</div>
+        <h3>Как перевести голосовое из Telegram в текст</h3>
+        <p>Быстрый способ превратить голосовое сообщение в читаемый текст за пару минут.</p>
+        <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
+      </a>
+      <a href="/blog/kak-rasshifrovat-audio-besplatno.html" class="card reveal delay-1" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
+        <div class="card-icon">💸</div>
+        <h3>Как расшифровать аудио бесплатно</h3>
+        <p>Обзор сервисов транскрибации и как расшифровать запись без оплаты.</p>
+        <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
+      </a>
+      <a href="/blog/chto-takoe-transkribaciya.html" class="card reveal delay-2" style="text-decoration:none;color:inherit;display:flex;flex-direction:column">
+        <div class="card-icon">📚</div>
+        <h3>Что такое транскрибация и зачем она нужна</h3>
+        <p>Объясняем простыми словами, где применяется и как сделать конспект.</p>
+        <span style="color:#60A5FA;font-weight:700;font-size:14px;margin-top:auto">Читать →</span>
+      </a>
+    </div>
+    <div class="center" style="margin-top:32px">
+      <a href="/blog/" class="btn-secondary">Все статьи блога</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="nav-logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></div><span>МОЛВИ</span></div>
+        <p>Расшифровка аудио в текст в Telegram. Говорите — мы превратим это в текст. Данные только в России.</p>
+        <div style="margin-top:14px"><span class="comp-badge">152-ФЗ</span><span class="comp-badge">SaluteSpeech</span><span class="comp-badge">GigaChat</span></div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Сервис</h4>
+          <ul>
+            <li><a href="#how">Как это работает</a></li>
+            <li><a href="#pricing">Тарифы</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="https://t.me/molviai_bot" target="_blank" rel="noopener">Открыть бот</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Экосистема</h4>
+          <ul>
+            <li><a href="https://molvi-ai.ru/">AI-диктофон</a></li>
+            <li><a href="/blog/">Блог</a></li>
+            <li><a href="https://molvi-ai.ru/">Главный сайт</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 МОЛВИ. Все права защищены.</span>
+      <span>Данные хранятся в России. Соответствует 152-ФЗ.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== NAVBAR SCROLL =====
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+});
+
+// ===== THEME SWITCH =====
+(function () {
+  const html = document.documentElement;
+  const checkbox = document.getElementById('themeCheckbox');
+  const STORAGE_KEY = 'molvi-theme';
+  function applyTheme(isDark) {
+    html.classList.toggle('light', !isDark);
+    if (checkbox) checkbox.checked = isDark;
+    localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
+  }
+  applyTheme(localStorage.getItem(STORAGE_KEY) !== 'light');
+  if (checkbox) checkbox.addEventListener('change', () => applyTheme(checkbox.checked));
+})();
+
+// ===== MOBILE MENU =====
+function openMobileMenu() {
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', 'true');
+}
+function closeMobileMenu() {
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('drawerBackdrop').classList.remove('open');
+  document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', 'false');
+}
+document.getElementById('mobileMenuBtn').onclick = openMobileMenu;
+
+// ===== SCROLL REVEAL =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.12 });
+
+// ===== FAQ =====
+function toggleFaq(qEl){
+  const item = qEl.closest('.faq-item');
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => {
+    el.classList.remove('open');
+    const b = el.querySelector('.faq-question'); if (b) b.setAttribute('aria-expanded','false');
+  });
+  if (!wasOpen) { item.classList.add('open'); qEl.setAttribute('aria-expanded','true'); }
+}
+const faqData = [
+  {q:'Как перевести голосовое из Telegram в текст?',a:'Перешлите голосовое сообщение в бот МОЛВИ (@molviai_bot) — через пару минут получите готовый текст с пунктуацией. Ничего устанавливать не нужно.'},
+  {q:'Как расшифровать аудио бесплатно онлайн?',a:'Первые 30 минут расшифровки в МОЛВИ — бесплатно, без регистрации и привязки карты. Просто откройте бот @molviai_bot и отправьте запись.'},
+  {q:'Сколько стоит расшифровать час аудио?',a:'От 75 ₽ за 1 час. Пакеты: 5 ч — 365 ₽ (73 ₽/ч), 10 ч — 699 ₽ (70 ₽/ч), 30 ч — 1 799 ₽ (60 ₽/ч), 50 ч — 2 499 ₽ (50 ₽/ч). Без подписки — платите только за то, что используете.'},
+  {q:'Как расшифровать запись с диктофона?',a:'Отправьте аудиофайл с диктофона (MP3, WAV, M4A и др.) в бот МОЛВИ. Поддерживаются записи любой длины. Результат — текст с кратким содержанием, можно скачать файлом TXT, PDF или DOCX.'},
+  {q:'Безопасно ли загружать конфиденциальные записи?',a:'Да. Аудиофайл удаляется сразу после расшифровки — мы его не храним. Распознавание работает на технологиях Сбера (SaluteSpeech), серверы в России, соответствие 152-ФЗ.'},
+  {q:'Какие форматы аудио и видео поддерживаются?',a:'Аудио: MP3, WAV, OGG, M4A, FLAC, AAC, Opus. Видео: MP4, MOV, MKV, WEBM. Голосовые из Telegram и WhatsApp — просто перешлите в бот.'}
+];
+const faqList = document.getElementById('faqList');
+faqData.forEach((item,i)=>{
+  const div = document.createElement('div');
+  div.className = 'faq-item reveal';
+  div.style.transitionDelay = (i*0.05)+'s';
+  div.innerHTML = `
+    <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-${i}">
+      <span>${item.q}</span>
+      <div class="faq-arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+    </button>
+    <div class="faq-answer" id="faq-answer-${i}" role="region">${item.a}</div>`;
+  faqList.appendChild(div);
+  observer.observe(div);
+});
+
+// observe all reveals
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+<script src="/cookie.js" defer></script>
+</body>
+</html>
