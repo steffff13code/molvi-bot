@@ -20,5 +20,5 @@ jobs:
           username: u3338359
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./site/
-          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+          server-dir: /
           dangerous-clean-slate: false
