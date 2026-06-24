@@ -102,40 +102,41 @@ input:focus{border-color:#2563eb}
 .sec{margin-bottom:36px}
 """
 
-_LOGIN_HTML = """\
-<!DOCTYPE html><html lang="ru"><head>
-<meta charset="UTF-8"><meta name="robots" content="noindex,nofollow">
-<title>МОЛВИ — Вход</title>
-<style>
-*{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:#0b0e17;color:#e2e8f0;font-family:system-ui,sans-serif;
-     display:flex;align-items:center;justify-content:center;min-height:100vh}}
-.card{{background:#131926;border:1px solid #1e2d4a;border-radius:16px;padding:40px;width:380px}}
-h1{{font-size:22px;margin-bottom:6px}}
-.sub{{color:#64748b;font-size:14px;margin-bottom:24px}}
-input{{width:100%;padding:12px 16px;background:#0b0e17;border:1px solid #1e2d4a;
-      border-radius:10px;color:#e2e8f0;font-size:15px;margin-bottom:14px;outline:none}}
-input:focus{{border-color:#2563eb}}
-button{{width:100%;padding:13px;background:#2563eb;border:none;border-radius:10px;
-        color:#fff;font-size:15px;font-weight:600;cursor:pointer}}
-button:hover{{background:#1d4ed8}}
-.err{{color:#f87171;font-size:14px;margin-bottom:12px}}
-</style></head><body>
-<div class="card">
-  <h1>🤫 МОЛВИ Админка</h1>
-  <p class="sub">Введите пароль для входа</p>
-  {error}
-  <form method="post" action="/admin/login">
-    <input type="password" name="password" placeholder="Пароль" autofocus>
-    <button type="submit">Войти →</button>
-  </form>
-</div></body></html>"""
+_LOGIN_HTML = (
+    '<!DOCTYPE html><html lang="ru"><head>'
+    '<meta charset="UTF-8"><meta name="robots" content="noindex,nofollow">'
+    '<title>МОЛВИ — Вход</title>'
+    '<style>'
+    '*{box-sizing:border-box;margin:0;padding:0}'
+    'body{background:#0b0e17;color:#e2e8f0;font-family:system-ui,sans-serif;'
+    '     display:flex;align-items:center;justify-content:center;min-height:100vh}'
+    '.card{background:#131926;border:1px solid #1e2d4a;border-radius:16px;padding:40px;width:380px}'
+    'h1{font-size:22px;margin-bottom:6px}'
+    '.sub{color:#64748b;font-size:14px;margin-bottom:24px}'
+    'input{width:100%;padding:12px 16px;background:#0b0e17;border:1px solid #1e2d4a;'
+    '      border-radius:10px;color:#e2e8f0;font-size:15px;margin-bottom:14px;outline:none}'
+    'input:focus{border-color:#2563eb}'
+    'button{width:100%;padding:13px;background:#2563eb;border:none;border-radius:10px;'
+    '       color:#fff;font-size:15px;font-weight:600;cursor:pointer}'
+    'button:hover{background:#1d4ed8}'
+    '.err{color:#f87171;font-size:14px;margin-bottom:12px}'
+    '</style></head><body>'
+    '<div class="card">'
+    '  <h1>\U0001f92b МОЛВИ Админка</h1>'
+    '  <p class="sub">Введите пароль для входа</p>'
+    '  <!--MOLVI_ERR-->'
+    '  <form method="post" action="/admin/login">'
+    '    <input type="password" name="password" placeholder="Пароль" autofocus>'
+    '    <button type="submit">Войти</button>'
+    '  </form>'
+    '</div></body></html>'
+)
 
 _ADMIN_HTML = """\
 <!DOCTYPE html><html lang="ru"><head>
 <meta charset="UTF-8"><meta name="robots" content="noindex,nofollow">
 <title>МОЛВИ — Админка</title>
-<style>{css}</style>
+<style>MOLVI_ADMIN_CSS</style>
 </head><body>
 <nav class="nav">
   <span class="nav-brand">🤫 МОЛВИ Админка</span>
@@ -312,9 +313,10 @@ async def _health(request: web.Request) -> web.Response:
 
 async def _admin_get(request: web.Request) -> web.Response:
     if not _valid_session(request):
-        return web.Response(content_type="text/html", text=_LOGIN_HTML.format(error=""))
+        return web.Response(content_type="text/html",
+                            text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->", ""))
     return web.Response(content_type="text/html",
-                        text=_ADMIN_HTML.format(css=_CSS))
+                        text=_ADMIN_HTML.replace("MOLVI_ADMIN_CSS", _CSS))
 
 
 async def _admin_login(request: web.Request) -> web.Response:
@@ -323,7 +325,8 @@ async def _admin_login(request: web.Request) -> web.Response:
     expected = _admin_password()
     if not expected:
         return web.Response(content_type="text/html",
-                            text=_LOGIN_HTML.format(error='<p class="err">ADMIN_PASSWORD не задан</p>'))
+                            text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->",
+                                '<p class="err">ADMIN_PASSWORD не задан</p>'))
     if pw == expected:
         sid = _new_session()
         resp = web.HTTPFound("/admin")
@@ -331,7 +334,7 @@ async def _admin_login(request: web.Request) -> web.Response:
         return resp
     return web.Response(
         content_type="text/html",
-        text=_LOGIN_HTML.format(error='<p class="err">Неверный пароль</p>'),
+        text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->", '<p class="err">Неверный пароль</p>'),
     )
 
 
