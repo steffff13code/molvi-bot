@@ -228,9 +228,6 @@ async def on_mode(cb: types.CallbackQuery) -> None:
     if not cb.from_user or not cb.message:
         return
     _, token, action = cb.data.split(":", 2)
-    if action == "plain":
-        await _process(cb, token, "plain")
-        return
     if action == "tpl":
         await cb.message.edit_text("📋 Выберите шаблон:", reply_markup=templates_kb(token))
         await cb.answer()
@@ -239,6 +236,8 @@ async def on_mode(cb: types.CallbackQuery) -> None:
         await cb.message.edit_text("Что сделать с записью?", reply_markup=choose_mode_kb(token))
         await cb.answer()
         return
+    # plain / summary / roadmap / keypoints / tasks → все идут в _process
+    await _process(cb, token, action)
 
 
 @router.callback_query(F.data.startswith("t:"))

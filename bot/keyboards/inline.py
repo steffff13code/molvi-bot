@@ -3,7 +3,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.config import settings
-from bot.prompts.system_prompts import TEMPLATE_KEYS, TEMPLATES
+from bot.prompts.system_prompts import TEMPLATE_KEYS, TEMPLATES, TOP_LEVEL_KEYS
 
 SITE_URL = settings.site_url
 _BASE = settings.site_url.rstrip("/")
@@ -30,12 +30,13 @@ def consent_kb() -> InlineKeyboardMarkup:
 # ───────────────────────── Выбор режима / шаблонов ─────────────────────────
 
 def choose_mode_kb(token: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🎙 Просто расшифровка", callback_data=f"m:{token}:plain")],
-            [InlineKeyboardButton(text="📋 Шаблоны", callback_data=f"m:{token}:tpl")],
-        ]
-    )
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton(text="🎙 Просто расшифровка", callback_data=f"m:{token}:plain")],
+    ]
+    for key in TOP_LEVEL_KEYS:
+        rows.append([InlineKeyboardButton(text=TEMPLATES[key].label, callback_data=f"m:{token}:{key}")])
+    rows.append([InlineKeyboardButton(text="📋 Шаблоны →", callback_data=f"m:{token}:tpl")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def templates_kb(token: str) -> InlineKeyboardMarkup:
