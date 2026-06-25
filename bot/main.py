@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import MenuButtonWebApp, WebAppInfo
@@ -59,5 +60,22 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
+def _handle_exception(loop, context: dict) -> None:  # type: ignore[type-arg]
+    exc = context.get("exception")
+    msg = context.get("message", "Unknown asyncio error")
+    if exc:
+        logger.opt(exception=exc).error("Unhandled asyncio exception: {msg}", msg=msg)
+    else:
+        logger.error("Asyncio error: {msg}", msg=msg)
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.new_event_loop()
+    loop.set_exception_handler(_handle_exception)
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by KeyboardInterrupt")
+    finally:
+        loop.close()
+        sys.exit(0)

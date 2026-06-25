@@ -30,7 +30,16 @@ _SESSION_TTL = 8 * 3600  # 8 часов
 _sessions: dict[str, float] = {}  # token → expires_at
 
 
+def _cleanup_sessions() -> None:
+    """Удаляет просроченные сессии (предотвращает утечку памяти)."""
+    now = time.time()
+    expired = [k for k, v in list(_sessions.items()) if v <= now]
+    for k in expired:
+        _sessions.pop(k, None)
+
+
 def _new_session() -> str:
+    _cleanup_sessions()
     token = secrets.token_urlsafe(32)
     _sessions[token] = time.time() + _SESSION_TTL
     return token
@@ -49,7 +58,41 @@ def _admin_password() -> str:
 
 def _check_token(request: web.Request) -> bool:
     t = settings.admin_api_token
-    return bool(t and request.headers.get("X-Admin-Token") == t)
+    if not t:
+        return False
+    provided = request.headers.get("X-Admin-Token", "")
+    return bool(provided and secrets.compare_digest(provided, t))
+
+
+# ───────────────────────── Брутфорс-защита ───────────────────────────
+_FAIL_MAX = 5
+_FAIL_WINDOW = 900  # 15 минут
+
+_fail_log: dict[str, tuple[int, float]] = {}  # ip → (count, first_fail_ts)
+
+
+def _is_rate_limited(ip: str) -> bool:
+    entry = _fail_log.get(ip)
+    if not entry:
+        return False
+    count, first_ts = entry
+    if time.time() - first_ts > _FAIL_WINDOW:
+        _fail_log.pop(ip, None)
+        return False
+    return count >= _FAIL_MAX
+
+
+def _record_fail(ip: str) -> None:
+    now = time.time()
+    entry = _fail_log.get(ip)
+    if not entry or now - entry[1] > _FAIL_WINDOW:
+        _fail_log[ip] = (1, now)
+    else:
+        _fail_log[ip] = (entry[0] + 1, entry[1])
+
+
+def _record_success(ip: str) -> None:
+    _fail_log.pop(ip, None)
 
 
 # ───────────────────────── HTML ─────────────────────────────────────
@@ -320,18 +363,34 @@ async def _admin_get(request: web.Request) -> web.Response:
 
 
 async def _admin_login(request: web.Request) -> web.Response:
+    ip = request.remote or "unknown"
+
+    if _is_rate_limited(ip):
+        logger.warning("Admin login rate-limited for ip={ip}", ip=ip)
+        return web.Response(
+            content_type="text/html", status=429,
+            text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->",
+                '<p class="err">Слишком много попыток. Подождите 15 минут.</p>'),
+        )
+
     data = await request.post()
-    pw = data.get("password", "")
+    pw = str(data.get("password", ""))
     expected = _admin_password()
     if not expected:
         return web.Response(content_type="text/html",
                             text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->",
                                 '<p class="err">ADMIN_PASSWORD не задан</p>'))
-    if pw == expected:
+
+    if secrets.compare_digest(pw.encode(), expected.encode()):
+        _record_success(ip)
         sid = _new_session()
         resp = web.HTTPFound("/admin")
-        resp.set_cookie("admin_sid", sid, max_age=_SESSION_TTL, httponly=True, samesite="Lax")
+        resp.set_cookie("admin_sid", sid, max_age=_SESSION_TTL,
+                        httponly=True, samesite="Lax", secure=True)
         return resp
+
+    _record_fail(ip)
+    logger.warning("Admin login failed for ip={ip}", ip=ip)
     return web.Response(
         content_type="text/html",
         text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->", '<p class="err">Неверный пароль</p>'),
@@ -430,8 +489,18 @@ async def _api_wl_remove(request: web.Request) -> web.Response:
 
 # ───────────────────────── App ────────────────────────────────────────────────
 
+@web.middleware
+async def _security_headers_mw(request: web.Request, handler):
+    resp = await handler(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("X-XSS-Protection", "1; mode=block")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return resp
+
+
 def build_app() -> web.Application:
-    app = web.Application(middlewares=[_api_auth_mw])
+    app = web.Application(middlewares=[_security_headers_mw, _api_auth_mw])
     # Healthcheck
     app.router.add_get("/health", _health)
     # HTML admin panel

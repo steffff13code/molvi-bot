@@ -63,7 +63,8 @@ class NexaraSTT:
         # json (а не verbose_json) — без посегментных данных, ответ легче/быстрее.
         data = {"response_format": "json", "language": "ru"}
 
-        async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=600) as client:
+        # Nexara использует нормальный TLS — не выключаем верификацию SSL.
+        async with httpx.AsyncClient(verify=True, timeout=600) as client:
             resp = await client.post(self._url, headers=headers, files=files, data=data)
             if resp.status_code in (402, 429):
                 raise STTQuotaError(f"Nexara {resp.status_code}: пакет/лимит исчерпан")
