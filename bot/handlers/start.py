@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats, get_stats_full, has_consent, is_whitelisted, set_consent, upsert_user
+from bot.db.queries import get_minutes_used, get_stats, get_stats_full, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
 from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
 from bot.keyboards.reply import (
     BTN_DEVICE,
@@ -340,3 +340,79 @@ async def stats_period_cb(callback: types.CallbackQuery) -> None:
     except Exception:
         pass
     await callback.answer()
+
+
+# ──────────────────── Команды управления пользователями (только admin) ────────
+
+
+def _admin_only(user: types.User | None) -> bool:
+    return bool(user and settings.admin_id and user.id == settings.admin_id)
+
+
+@router.message(Command("givehours"))
+async def cmd_give_hours(message: types.Message) -> None:
+    """Подарить пользователю N часов. Использование: /givehours <tg_id> <часов>"""
+    if not _admin_only(message.from_user):
+        return
+    parts = (message.text or "").split()
+    if len(parts) != 3 or not parts[1].isdigit() or not parts[2].isdigit():
+        await message.answer("Использование: /givehours <tg_id> <часов>\nПример: /givehours 1977145797 10")
+        return
+    tg_id = int(parts[1])
+    hours = int(parts[2])
+    minutes = hours * 60.0
+    ok = await gift_minutes(tg_id, minutes)
+    if ok:
+        remaining = max(0.0, await get_minutes_used(tg_id))
+        effective_free = settings.free_minutes + minutes  # сколько всего получит
+        await message.answer(
+            f"✅ Пользователю <code>{tg_id}</code> подарено <b>{hours} ч ({int(minutes)} мин)</b>.\n"
+            f"Теперь у него доступно ещё ~<b>{int(max(0, -remaining + minutes))} мин</b> "
+            f"до следующего пэйвола.",
+            parse_mode="HTML",
+        )
+    else:
+        await message.answer(
+            f"⚠️ Пользователь <code>{tg_id}</code> не найден в базе.\n"
+            "Он должен хотя бы раз запустить бота.",
+            parse_mode="HTML",
+        )
+
+
+@router.message(Command("wladd"))
+async def cmd_wl_add(message: types.Message) -> None:
+    """Добавить в whitelist (безлимит). Использование: /wladd <tg_id> [username] [заметка]"""
+    if not _admin_only(message.from_user):
+        return
+    parts = (message.text or "").split(maxsplit=3)
+    if len(parts) < 2:
+        await message.answer("Использование: /wladd <tg_id> [username] [заметка]\nПример: /wladd 1977145797 MrNikola1 подарок")
+        return
+    tg_id = int(parts[1]) if parts[1].isdigit() else None
+    username = parts[2].lstrip("@") if len(parts) > 2 else None
+    note = parts[3] if len(parts) > 3 else None
+    if tg_id is None:
+        await message.answer("⚠️ tg_id должен быть числом.")
+        return
+    ok = await whitelist_add(tg_id=tg_id, username=username, note=note)
+    if ok:
+        un = f" (@{username})" if username else ""
+        await message.answer(f"✅ <code>{tg_id}</code>{un} добавлен в whitelist — безлимит включён.", parse_mode="HTML")
+    else:
+        await message.answer(f"⚠️ Не удалось добавить (возможно, уже есть в whitelist).")
+
+
+@router.message(Command("wlrm"))
+async def cmd_wl_remove(message: types.Message) -> None:
+    """Удалить из whitelist по ID записи. Использование: /wlrm <id_записи>"""
+    if not _admin_only(message.from_user):
+        return
+    parts = (message.text or "").split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Использование: /wlrm <id_записи>\nID записи — из /wllist")
+        return
+    ok = await whitelist_remove(int(parts[1]))
+    if ok:
+        await message.answer(f"✅ Запись #{parts[1]} удалена из whitelist.")
+    else:
+        await message.answer(f"⚠️ Запись #{parts[1]} не найдена.")

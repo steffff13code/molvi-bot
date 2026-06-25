@@ -57,6 +57,20 @@ async def add_minutes(user_id: int, minutes: float) -> None:
         await db.commit()
 
 
+async def gift_minutes(user_id: int, minutes: float) -> bool:
+    """Подарить пользователю N минут — вычитает из minutes_used.
+
+    Возвращает True если пользователь найден, False если нет.
+    """
+    async with get_db() as db:
+        cur = await db.execute(
+            "UPDATE users SET minutes_used = COALESCE(minutes_used,0) - ? WHERE user_id=?;",
+            (minutes, user_id),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+
 # ───────────────────────── Whitelist (безлимит) ─────────────────────────
 
 def _norm_username(username: str | None) -> str | None:
