@@ -16,9 +16,14 @@ from bot.keyboards.reply import (
     main_menu_kb,
 )
 from bot.prompts.system_prompts import TEMPLATE_KEYS, TEMPLATES
+from bot.services.nav_cleanup import nav_cleanup
 from bot.services.pricing import FREE_MINUTES, tariffs_text
 
 router = Router()
+
+# Отслеживаем последнее «главное» сообщение каждого пользователя —
+# при повторном нажатии «Главная» редактируем его вместо отправки нового.
+_last_home: dict[int, int] = {}  # user_id → message_id
 
 WELCOME_TEXT = """Привет, {name}! 👋
 
@@ -112,7 +117,10 @@ async def on_consent(cb: types.CallbackQuery) -> None:
 @router.message(Command("new"))
 @router.message(F.text == BTN_TRANSCRIBE)
 async def new_record_cmd(message: types.Message) -> None:
-    await message.answer(TRANSCRIBE_HINT, reply_markup=main_menu_kb())
+    user = message.from_user
+    sent = await message.answer(TRANSCRIBE_HINT, reply_markup=main_menu_kb())
+    if user:
+        nav_cleanup.track(user.id, sent.message_id)
 
 
 @router.callback_query(F.data == "go:transcribe")
@@ -124,8 +132,9 @@ async def go_transcribe(cb: types.CallbackQuery) -> None:
 
 @router.message(F.text == BTN_TEMPLATES)
 async def templates_info(message: types.Message) -> None:
+    user = message.from_user
     lines = "\n".join(f"• {TEMPLATES[k].label}" for k in TEMPLATE_KEYS)
-    await message.answer(
+    sent = await message.answer(
         "📋 <b>Шаблоны саммари</b>\n\n"
         "Шаблон применяется к вашей записи. Доступны:\n"
         f"{lines}\n\n"
@@ -133,6 +142,8 @@ async def templates_info(message: types.Message) -> None:
         reply_markup=main_menu_kb(),
         parse_mode="HTML",
     )
+    if user:
+        nav_cleanup.track(user.id, sent.message_id)
 
 
 @router.message(F.text == BTN_TARIFFS)
@@ -144,12 +155,14 @@ async def tariffs(message: types.Message) -> None:
         wl = await is_whitelisted(user.id, user.username)
         if not wl:
             used = await get_minutes_used(user.id)
-    await message.answer(
+    sent = await message.answer(
         tariffs_text(used_minutes=used, whitelisted=wl),
         reply_markup=tariffs_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,
     )
+    if user:
+        nav_cleanup.track(user.id, sent.message_id)
 
 
 @router.callback_query(F.data.startswith("buy:"))
@@ -168,12 +181,25 @@ async def buy_stub(cb: types.CallbackQuery) -> None:
 async def home_handler(message: types.Message) -> None:
     user = message.from_user
     name = user.first_name if user and user.first_name else "друг"
-    await message.answer(
-        _welcome(name),
+    text = _welcome(name)
+
+    # Удаляем предыдущее «Главная» сообщение и отправляем новое
+    if user:
+        prev_id = _last_home.pop(user.id, None)
+        if prev_id:
+            try:
+                await message.bot.delete_message(message.chat.id, prev_id)
+            except Exception:
+                pass
+
+    sent = await message.answer(
+        text,
         reply_markup=main_menu_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,
     )
+    if user:
+        _last_home[user.id] = sent.message_id
 
 
 _TEMPLATE_NAMES = {

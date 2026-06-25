@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 DEFAULT_TTL_SEC = 24 * 3600  # 24 часа — чтобы кнопки работали в течение дня
 
@@ -20,6 +20,8 @@ class _Entry:
     transcript: str
     duration_sec: int | None
     expires_at: float
+    last_result: str | None = field(default=None)  # последний результат GigaChat
+    last_key: str | None = field(default=None)      # ключ шаблона для last_result
 
 
 class SessionStore:
@@ -47,6 +49,13 @@ class SessionStore:
             self._data.pop(token, None)
             return None
         return entry
+
+    def set_result(self, token: str, result: str, key: str) -> None:
+        """Сохраняет последний результат GigaChat для скачивания."""
+        entry = self._data.get(token)
+        if entry:
+            entry.last_result = result
+            entry.last_key = key
 
     def drop(self, token: str) -> None:
         self._data.pop(token, None)

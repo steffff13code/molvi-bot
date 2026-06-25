@@ -1,6 +1,26 @@
 from __future__ import annotations
 
+import re
+
 from aiogram.types import BufferedInputFile
+
+
+def md_to_html(text: str) -> str:
+    """Конвертирует Markdown GigaChat в HTML для Telegram (parse_mode=HTML).
+
+    Экранирует HTML-спецсимволы, затем конвертирует **жирный**, *текст*,
+    # Заголовки, маркеры списков в соответствующие HTML-теги/символы.
+    """
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    # **жирный** → <b>жирный</b>  (раньше, чтобы не задеть одиночные *)
+    text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text, flags=re.DOTALL)
+    # ### Заголовок → <b>Заголовок</b>
+    text = re.sub(r"^#{1,6}\s+(.+)$", r"<b>\1</b>", text, flags=re.MULTILINE)
+    # Маркеры списков (* item, - item) в начале строки → убираем символ
+    text = re.sub(r"^[*\-]\s+", "• ", text, flags=re.MULTILINE)
+    # Оставшиеся *одиночные* → убираем звёздочки
+    text = re.sub(r"\*(.+?)\*", r"\1", text, flags=re.DOTALL)
+    return text
 
 
 def split_telegram_text(text: str, limit: int = 4096) -> list[str]:
@@ -33,4 +53,3 @@ def split_telegram_text(text: str, limit: int = 4096) -> list[str]:
 def as_txt_file(filename: str, text: str) -> BufferedInputFile:
     data = text.encode("utf-8")
     return BufferedInputFile(data, filename=filename)
-

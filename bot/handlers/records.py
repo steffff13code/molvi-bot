@@ -5,8 +5,9 @@ from datetime import datetime
 from aiogram import F, Router, types
 
 from bot.db.queries import get_record, get_user_records
-from bot.keyboards.inline import choose_mode_kb, result_kb
+from bot.keyboards.inline import choose_mode_kb
 from bot.keyboards.reply import BTN_MY_RECORDS, main_menu_kb
+from bot.services.nav_cleanup import nav_cleanup
 from bot.services.session_store import session_store
 
 router = Router()
@@ -35,13 +36,14 @@ async def my_records(message: types.Message) -> None:
 
     records = await get_user_records(user.id, limit=10)
     if not records:
-        await message.answer(
+        sent = await message.answer(
             "📁 <b>Мои записи</b>\n\n"
             "У вас пока нет сохранённых расшифровок.\n\n"
             "Отправьте аудио, голосовое или видео — и я расшифрую его!",
             reply_markup=main_menu_kb(),
             parse_mode="HTML",
         )
+        nav_cleanup.track(user.id, sent.message_id)
         return
 
     lines = ["📁 <b>Мои записи</b> (последние 10)\n"]
@@ -65,11 +67,13 @@ async def my_records(message: types.Message) -> None:
     lines.append("\n👆 Нажмите на запись, чтобы выбрать что с ней сделать.")
 
     kb = types.InlineKeyboardMarkup(inline_keyboard=buttons)
-    await message.answer(
+    sent = await message.answer(
         "\n".join(lines),
         reply_markup=kb,
         parse_mode="HTML",
     )
+    # Список записей — транзитный, исчезает при отправке нового аудио
+    nav_cleanup.track(user.id, sent.message_id)
 
 
 @router.callback_query(F.data.startswith("rec:"))
@@ -95,10 +99,10 @@ async def view_record(cb: types.CallbackQuery) -> None:
     date = _fmt_date(rec["created_at"])
     dur_str = f" · {dur}" if dur else ""
 
-    # Кладём расшифровку в сессию и показываем меню действий (как при первой расшифровке)
+    # Кладём расшифровку в сессию и РЕДАКТИРУЕМ текущее сообщение (без нового)
     token = session_store.put(user.id, rec["transcript"] or "", rec["duration_sec"])
-    await cb.message.answer(
-        f"📄 <b>Запись от {date}{dur_str}</b>\nЧто сделать с этой расшифровкой?",
+    await cb.message.edit_text(
+        f"📄 <b>Запись от {date}{dur_str}</b>\n\nЧто сделать с этой расшифровкой?",
         parse_mode="HTML",
         reply_markup=choose_mode_kb(token),
     )

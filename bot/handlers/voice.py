@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import html as _html
 import os
 import uuid
 
@@ -17,29 +18,47 @@ from bot.db.queries import (
     save_record,
     upsert_user,
 )
-from bot.keyboards.inline import choose_mode_kb, consent_kb, paywall_kb, result_kb, templates_kb
+from bot.keyboards.inline import (
+    ai_result_kb,
+    choose_mode_kb,
+    consent_kb,
+    paywall_kb,
+    plain_result_kb,
+    result_kb,
+    templates_kb,
+)
 from bot.keyboards.reply import main_menu_kb
 from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
 from bot.services.audio import AUDIO_DIR, ensure_dirs, trim_audio
 from bot.services.export import build_export
+from bot.services.nav_cleanup import nav_cleanup
 from bot.services.pricing import FREE_MINUTES, paywall_text
 from bot.services.providers import STTQuotaError, get_llm, get_stt
 from bot.services.retry import with_retries
 from bot.services.session_store import session_store
-from bot.utils import split_telegram_text
+from bot.utils import md_to_html, split_telegram_text
 
 router = Router()
 
 _stt = get_stt()
 _llm = get_llm()
 
+# Самари отправляем файлом — оно длинное
+_FILE_KEYS = {"summary"}
+
+# Водяной знак в начале расшифровки
+_WATERMARK = "Текст расшифрован МОЛВИ — https://molvi-ai.ru/\n\n"
+
+# Максимальная длина текста в сообщении (с запасом на теги)
+_MSG_LIMIT = 3800
+
+
+def _watermarked(transcript: str) -> str:
+    return _WATERMARK + transcript
+
 
 async def _recover_session(cb: types.CallbackQuery) -> str | None:
-    """Когда сессия истекла — восстанавливает из последней записи БД.
-
-    Возвращает новый token или None если записей нет.
-    Отправляет сообщение пользователю с выбором действия.
-    """
+    """Когда сессия истекла — восстанавливает из последней записи БД."""
     from bot.db.queries import get_user_records
     user = cb.from_user
     if not user or not cb.message:
@@ -50,7 +69,6 @@ async def _recover_session(cb: types.CallbackQuery) -> str | None:
         return None
     rec = records[0]
     new_token = session_store.put(user.id, rec["transcript"] or "", rec["duration_sec"])
-    from bot.keyboards.inline import choose_mode_kb
     await cb.message.answer(
         "⏰ <b>Сессия истекла</b> — восстановил вашу последнюю расшифровку.\n"
         "Выберите, что с ней сделать:",
@@ -60,7 +78,8 @@ async def _recover_session(cb: types.CallbackQuery) -> str | None:
     await cb.answer()
     return new_token
 
-# Поддерживаемые расширения для документов (на случай, если файл прислали «файлом»).
+
+# Поддерживаемые расширения документов
 _SUPPORTED_DOC_EXTS = {
     ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".aac", ".flac", ".opus", ".wma", ".amr",
     ".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".3gp",
@@ -70,13 +89,6 @@ CONSENT_REQUIRED_TEXT = (
     "Перед началом работы подтвердите согласие с документами — нажмите «✅ Подтвердить» "
     "в сообщении ниже. Это нужно один раз."
 )
-
-# Водяной знак, который вставляется в начало КАЖДОЙ расшифровки (файл и сообщение).
-_WATERMARK = "Текст расшифрован МОЛВИ — https://molvi-ai.ru/\n\n"
-
-
-def _watermarked(transcript: str) -> str:
-    return _WATERMARK + transcript
 
 
 def _ext_from_name(name: str | None) -> str:
@@ -94,7 +106,6 @@ def _is_supported_document(doc: types.Document) -> bool:
 
 
 async def _ensure_consent(message: types.Message, user_id: int) -> bool:
-    """True если согласие есть. Иначе показывает запрос согласия и возвращает False."""
     if await has_consent(user_id):
         return True
     await message.answer(
@@ -113,6 +124,9 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         return
 
     await upsert_user(user_id=user.id, username=user.username, first_name=user.first_name)
+
+    # Удаляем транзитные навигационные сообщения (тарифы, помощь, записи)
+    await nav_cleanup.clean(user.id, message.chat.id, bot)
 
     if not await _ensure_consent(message, user.id):
         return
@@ -155,7 +169,6 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         file_size = message.document.file_size
         file_name = message.document.file_name
 
-    # Проверка размера файла (до скачивания с серверов Telegram).
     max_bytes = settings.max_audio_mb * 1024 * 1024
     if file_size is not None and file_size > max_bytes:
         await message.answer(
@@ -171,9 +184,8 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
 
-    # Лимит/whitelist
     whitelisted = await is_whitelisted(user.id, user.username)
-    remaining_sec: int | None = None  # None = безлимит
+    remaining_sec: int | None = None
     trim_needed = False
 
     if not whitelisted:
@@ -189,7 +201,6 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
             )
             return
         remaining_sec = int(remaining_min * 60)
-        # Если длительность известна и превышает остаток — обрежем
         if duration_sec is not None and duration_sec > remaining_sec:
             trim_needed = True
 
@@ -217,7 +228,6 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         tg_file = await bot.get_file(tg_file_id)  # type: ignore[arg-type]
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
 
-        # Обрезка если не хватает лимита
         stt_path = source_path
         actual_duration_sec = duration_sec
         if trim_needed and remaining_sec:
@@ -244,7 +254,6 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
     finally:
-        # Вариант А: файлы удаляются сразу после распознавания.
         for p in (source_path, trimmed_path):
             try:
                 if os.path.exists(p):
@@ -252,19 +261,15 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
             except Exception:
                 pass
 
-    # Учёт минут: списываем только реально расшифрованную часть.
     billed_sec = actual_duration_sec if trim_needed else duration_sec
     if billed_sec:
         await add_minutes(user.id, billed_sec / 60.0)
     await log_event(user_id=user.id, type_="recognize", duration_sec=billed_sec)
 
-    # Сохраняем расшифровку в историю пользователя ("Мои записи").
     await save_record(user.id, transcript, duration_sec)
 
-    # Транскрипт держим только в RAM на время сессии (для смены шаблона).
     token = session_store.put(user.id, transcript, duration_sec)
 
-    # Показываем остаток лимита для обычных пользователей.
     balance_line = ""
     if not whitelisted:
         used_now = await get_minutes_used(user.id)
@@ -293,7 +298,6 @@ async def on_mode(cb: types.CallbackQuery) -> None:
         await cb.message.edit_text("Что сделать с записью?", reply_markup=choose_mode_kb(token))
         await cb.answer()
         return
-    # plain / summary / roadmap / keypoints / tasks → все идут в _process
     await _process(cb, token, action)
 
 
@@ -305,18 +309,20 @@ async def on_template(cb: types.CallbackQuery) -> None:
 
 @router.callback_query(F.data.startswith("chg:"))
 async def on_change_template(cb: types.CallbackQuery) -> None:
+    """Обратная совместимость — старая кнопка 'Сменить шаблон'."""
     if not cb.message:
         return
     token = cb.data.split(":", 1)[1]
     if not session_store.get(token, cb.from_user.id if cb.from_user else 0):
         await _recover_session(cb)
         return
-    await cb.message.answer("📋 Выберите другой шаблон:", reply_markup=choose_mode_kb(token))
+    await cb.message.edit_text("Что сделать с записью?", reply_markup=choose_mode_kb(token))
     await cb.answer()
 
 
 @router.callback_query(F.data.startswith("dl:"))
 async def on_download(cb: types.CallbackQuery) -> None:
+    """Скачать расшифровку (только для режима 'Просто расшифровка')."""
     user = cb.from_user
     if not user or not cb.message:
         return
@@ -336,6 +342,32 @@ async def on_download(cb: types.CallbackQuery) -> None:
         await log_event(user_id=user.id, type_="export", fmt=fmt)
     except Exception as e:
         logger.exception("Export failed: {e}", e=e)
+        await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
+
+
+@router.callback_query(F.data.startswith("dr:"))
+async def on_download_result(cb: types.CallbackQuery) -> None:
+    """Скачать результат GigaChat (Самари, Роадмап, Ключевые моменты и др.)."""
+    user = cb.from_user
+    if not user or not cb.message:
+        return
+    _, token, fmt = cb.data.split(":", 2)
+    entry = session_store.get(token, user.id)
+    if not entry:
+        await _recover_session(cb)
+        return
+    result_text = entry.last_result or entry.transcript
+    label = TEMPLATES.get(entry.last_key or "", TEMPLATES["plain"]).label if entry.last_key else "Результат МОЛВИ"
+    await cb.answer("Готовлю файл…")
+    try:
+        data, filename = await asyncio.to_thread(build_export, fmt, label, result_text)
+        await cb.message.answer_document(
+            types.BufferedInputFile(data, filename=filename),
+            caption=f"📄 {label} ({fmt.upper()})",
+        )
+        await log_event(user_id=user.id, type_="export", fmt=fmt)
+    except Exception as e:
+        logger.exception("Export result failed: {e}", e=e)
         await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
 
 
@@ -368,11 +400,10 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
     await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)
     await cb.answer()
 
-    transcript = entry.transcript
     try:
         system, prefix = build_summary_prompt(key)
         summary = await with_retries(
-            lambda: _llm.summarize(text=prefix + transcript, system=system),
+            lambda: _llm.summarize(text=prefix + entry.transcript, system=system),
             attempts=3,
             base_delay=1.0,
         )
@@ -382,22 +413,57 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
         await log_event(user_id=user.id, type_="error")
         await cb.message.edit_text(
             "⚠️ Не удалось обработать через GigaChat. Попробуйте ещё раз.",
-            reply_markup=result_kb(token),
+            reply_markup=choose_mode_kb(token),
         )
         return
 
-    label = TEMPLATES.get(key, TEMPLATES["plain"]).label
-    # 1) Структурированное саммари
-    head = f"<b>{label}</b>\n\n{summary}".strip()
-    parts = split_telegram_text(head)
-    await cb.message.edit_text(parts[0], parse_mode="HTML")
-    for p in parts[1:]:
-        await cb.message.answer(p, parse_mode="HTML")
+    # Сохраняем результат для скачивания
+    session_store.set_result(token, summary, key)
 
-    # 2) Полную расшифровку НЕ вываливаем в чат — даём кнопки: файлом или сообщением.
-    await cb.message.answer(
-        "📄 <b>Полная расшифровка готова.</b>\n"
-        "Скачайте файлом (TXT / PDF / DOCX) или получите сообщением 👇",
-        parse_mode="HTML",
-        reply_markup=result_kb(token),
-    )
+    label = TEMPLATES.get(key, TEMPLATES["plain"]).label
+    label_safe = _html.escape(label)
+    summary_html = md_to_html(summary)
+
+    if key == "plain":
+        # 2-3 тезиса + предложение скачать полную расшифровку
+        body = (
+            f"<b>{label_safe}</b>\n\n{summary_html}\n\n"
+            f"📄 <b>Полная расшифровка готова — скачайте файлом:</b>"
+        )
+        await cb.message.edit_text(body, parse_mode="HTML", reply_markup=plain_result_kb(token))
+
+    elif key in _FILE_KEYS:
+        # Самари — отправляем файлом, в сообщении показываем превью
+        try:
+            data, filename = await asyncio.to_thread(build_export, "txt", label, summary)
+            await cb.message.answer_document(
+                types.BufferedInputFile(data, filename=filename),
+                caption=f"📝 {label}",
+            )
+        except Exception as e:
+            logger.exception("Summary file export failed: {e}", e=e)
+
+        # Превью первых ~600 символов в сообщении
+        preview_raw = summary[:600] + ("…" if len(summary) > 600 else "")
+        preview_html = md_to_html(preview_raw)
+        body = (
+            f"<b>{label_safe}</b>\n\n{preview_html}\n\n"
+            f"📎 <i>Полный текст — в прикреплённом файле выше. "
+            f"Скачать ещё раз — кнопки ниже:</i>"
+        )
+        await cb.message.edit_text(body, parse_mode="HTML", reply_markup=ai_result_kb(token))
+
+    else:
+        # Роадмап, Ключевые моменты, Список задач, тематические шаблоны — текстом в том же сообщении
+        header = f"<b>{label_safe}</b>\n\n"
+        if len(header) + len(summary_html) <= _MSG_LIMIT:
+            body = header + summary_html
+        else:
+            # Обрезаем с пометкой
+            cutoff = _MSG_LIMIT - len(header) - 80
+            body = (
+                header
+                + summary_html[:cutoff]
+                + "\n\n<i>…текст сокращён. Скачайте полный вариант файлом 👇</i>"
+            )
+        await cb.message.edit_text(body, parse_mode="HTML", reply_markup=ai_result_kb(token))

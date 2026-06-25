@@ -47,8 +47,8 @@ def templates_kb(token: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def result_kb(token: str) -> InlineKeyboardMarkup:
-    """Кнопки под готовым результатом: скачать файлом, получить сообщением, сменить шаблон."""
+def plain_result_kb(token: str) -> InlineKeyboardMarkup:
+    """Кнопки для режима 'Просто расшифровка': скачать транскрипт + получить текстом + назад."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -56,8 +56,36 @@ def result_kb(token: str) -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="📕 PDF", callback_data=f"dl:{token}:pdf"),
                 InlineKeyboardButton(text="📘 DOCX", callback_data=f"dl:{token}:docx"),
             ],
-            [InlineKeyboardButton(text="📩 Получить расшифровку сообщением", callback_data=f"msg:{token}")],
-            [InlineKeyboardButton(text="🔁 Сменить шаблон", callback_data=f"chg:{token}")],
+            [InlineKeyboardButton(text="📩 Получить текстом", callback_data=f"msg:{token}")],
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data=f"m:{token}:back")],
+        ]
+    )
+
+
+def ai_result_kb(token: str) -> InlineKeyboardMarkup:
+    """Кнопки после AI-обработки (Самари, Роадмап и др.): скачать результат + назад."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📄 TXT", callback_data=f"dr:{token}:txt"),
+                InlineKeyboardButton(text="📕 PDF", callback_data=f"dr:{token}:pdf"),
+                InlineKeyboardButton(text="📘 DOCX", callback_data=f"dr:{token}:docx"),
+            ],
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data=f"m:{token}:back")],
+        ]
+    )
+
+
+# Оставляем для обратной совместимости (старые кнопки в истории чата)
+def result_kb(token: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📄 TXT", callback_data=f"dl:{token}:txt"),
+                InlineKeyboardButton(text="📕 PDF", callback_data=f"dl:{token}:pdf"),
+                InlineKeyboardButton(text="📘 DOCX", callback_data=f"dl:{token}:docx"),
+            ],
+            [InlineKeyboardButton(text="⬅️ Назад", callback_data=f"m:{token}:back")],
         ]
     )
 
