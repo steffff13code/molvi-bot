@@ -61,7 +61,8 @@ class Settings(BaseSettings):
     # Админ / API
     admin_id: int = 0               # Telegram ID владельца (для /stats)
     admin_api_token: str = ""       # секрет для HTTP-API (X-Admin-Token)
-    admin_password: str = ""        # пароль web-панели /admin (если пусто — используется admin_api_token)
+    admin_password_hash: str = ""   # bcrypt-хеш пароля web-панели (предпочтительно)
+    admin_password: str = ""        # plaintext-пароль (legacy; используется если hash не задан)
     api_port: int = 0               # PORT от Railway; 0 = API не поднимать
 
     # HTTP

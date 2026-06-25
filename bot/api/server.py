@@ -19,6 +19,7 @@ from __future__ import annotations
 import secrets
 import time
 
+import bcrypt
 from aiohttp import web
 from loguru import logger
 
@@ -51,9 +52,24 @@ def _valid_session(request: web.Request) -> bool:
     return bool(exp and exp > time.time())
 
 
-def _admin_password() -> str:
-    """Пароль от web-панели: ADMIN_PASSWORD (Railway) или ADMIN_API_TOKEN как запасной."""
-    return settings.admin_password or settings.admin_api_token
+def _check_admin_password(pw: str) -> bool:
+    """Проверяет пароль web-панели.
+
+    Приоритет:
+    1. ADMIN_PASSWORD_HASH (bcrypt) — предпочтительно
+    2. ADMIN_PASSWORD (plaintext, legacy)
+    3. ADMIN_API_TOKEN как запасной пароль
+    """
+    pw_bytes = pw.encode()
+    if settings.admin_password_hash:
+        try:
+            return bcrypt.checkpw(pw_bytes, settings.admin_password_hash.encode())
+        except Exception:
+            return False
+    expected = settings.admin_password or settings.admin_api_token
+    if not expected:
+        return False
+    return secrets.compare_digest(pw_bytes, expected.encode())
 
 
 def _check_token(request: web.Request) -> bool:
@@ -375,13 +391,12 @@ async def _admin_login(request: web.Request) -> web.Response:
 
     data = await request.post()
     pw = str(data.get("password", ""))
-    expected = _admin_password()
-    if not expected:
+    if not (settings.admin_password_hash or settings.admin_password or settings.admin_api_token):
         return web.Response(content_type="text/html",
                             text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->",
-                                '<p class="err">ADMIN_PASSWORD не задан</p>'))
+                                '<p class="err">ADMIN_PASSWORD_HASH не задан</p>'))
 
-    if secrets.compare_digest(pw.encode(), expected.encode()):
+    if _check_admin_password(pw):
         _record_success(ip)
         sid = _new_session()
         resp = web.HTTPFound("/admin")

@@ -123,6 +123,36 @@ def test_compare_digest_wrong() -> None:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# 5b. Bcrypt password verification (_check_admin_password)
+# ──────────────────────────────────────────────────────────────────────
+import bcrypt as _bcrypt
+from bot.api.server import _check_admin_password
+from bot.config import settings as _settings
+
+
+def test_bcrypt_correct_password() -> None:
+    pw = "test_admin_pass_42"
+    hashed = _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt(4)).decode()  # rounds=4 для скорости
+    original = _settings.admin_password_hash
+    object.__setattr__(_settings, "admin_password_hash", hashed)
+    try:
+        assert _check_admin_password(pw)
+    finally:
+        object.__setattr__(_settings, "admin_password_hash", original)
+
+
+def test_bcrypt_wrong_password() -> None:
+    pw = "test_admin_pass_42"
+    hashed = _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt(4)).decode()
+    original = _settings.admin_password_hash
+    object.__setattr__(_settings, "admin_password_hash", hashed)
+    try:
+        assert not _check_admin_password("wrong_password")
+    finally:
+        object.__setattr__(_settings, "admin_password_hash", original)
+
+
+# ──────────────────────────────────────────────────────────────────────
 # 6. Session cleanup
 # ──────────────────────────────────────────────────────────────────────
 from bot.api.server import _sessions, _cleanup_sessions, _new_session
