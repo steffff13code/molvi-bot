@@ -217,6 +217,16 @@ body::before{
 .hs-val{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:800;color:var(--tx);letter-spacing:-.03em}
 .hs-lbl{font-size:11px;color:var(--tx3);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
 
+/* HERO LEFT COLUMN */
+.hero-left-col{padding-left:40px}
+.hero-h1-main{font-size:64px;width:600px;max-width:100%}
+.hero-price{font-size:32px;font-weight:700;color:#fff;letter-spacing:-.01em;white-space:nowrap;display:block}
+@media(max-width:960px){
+  .hero-left-col{padding-left:0}
+  .hero-h1-main{font-size:clamp(1.9rem,6vw,3rem);width:auto}
+  .hero-price{font-size:clamp(1.3rem,4.5vw,1.8rem);white-space:normal}
+}
+
 /* TG MOCKUP */
 .tg-wrap{position:relative;margin-top:0}
 .tg-glow{position:absolute;inset:-20px;background:radial-gradient(ellipse at 50% 40%,rgba(45,110,245,.2) 0%,transparent 65%);border-radius:50%;pointer-events:none}
@@ -355,8 +365,9 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
 @media(max-width:640px){
   .wrap{padding:0 18px}
   .hero{padding:44px 0 56px}
-  .hero-inner>div{padding-left:0 !important}
-  .hero-h1{font-size:clamp(1.9rem,8vw,2.6rem);letter-spacing:-.02em}
+  .hero-left-col{padding-left:0 !important}
+  .hero-h1-main{font-size:clamp(1.9rem,8vw,2.6rem) !important;width:auto !important;letter-spacing:-.02em}
+  .hero-h1-main .hero-price{font-size:clamp(1.4rem,6vw,1.9rem) !important}
   .hero-sub{font-size:15px}
   .hero-cta-row{flex-direction:column;gap:10px}
   .hero-cta-row .btn{width:100%;justify-content:center}
@@ -457,8 +468,8 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
     <div class="hero-inner">
 
       <!-- LEFT -->
-      <div style="padding-left:40px">
-        <h1 class="hero-h1" style="width:600px;font-size:64px">Аудио в текст<br><span class="grad">от 50 ₽ в час!</span><br><span style="font-size:32px;font-weight:700;color:#fff;letter-spacing:-.01em;white-space:nowrap">Первые 60 минут бесплатно!</span></h1>
+      <div class="hero-left-col">
+        <h1 class="hero-h1 hero-h1-main">Аудио в текст<br><span class="grad">от 50 ₽ в час!</span><br><span class="hero-price">Первые 60 минут бесплатно!</span></h1>
         <p class="hero-sub">Отправьте аудио в <a href="https://t.me/molviai_bot" target="_blank" rel="noopener">бот МОЛВИ</a> — получите расшифровку с кратким содержанием и задачами.</p>
         <div class="hero-cta-row">
           <a href="https://t.me/molviai_bot" class="btn btn-blue btn-lg" target="_blank" rel="noopener">

@@ -28,12 +28,17 @@ _PACKAGES = [
 ]
 
 
-def tariffs_text() -> str:
+def tariffs_text(used_minutes: float = 0.0, whitelisted: bool = False) -> str:
     lines = [
         "💳 <b>Тарифы МОЛВИ</b>\n",
-        f"🎁 <b>{FREE_MINUTES} минут — бесплатно</b>, прямо сейчас и без карты.\n",
-        "<b>Платные пакеты:</b>",
+        f"🎁 <b>{FREE_MINUTES} минут — бесплатно</b>, прямо сейчас и без карты.",
     ]
+    if whitelisted:
+        lines.append("⭐ <b>Ваш статус: безлимит</b> — лимиты не применяются.\n")
+    else:
+        remaining = max(0.0, FREE_MINUTES - used_minutes)
+        lines.append(f"📊 Осталось: <b>{remaining:.0f} из {FREE_MINUTES} бесплатных минут</b>\n")
+    lines.append("<b>Платные пакеты:</b>")
     for hours, price, per_h in _PACKAGES:
         note = f"  <i>({per_h} ₽/ч)</i>" if per_h else ""
         lines.append(f"• {hours} ч — <b>{price} ₽</b>{note}")

@@ -101,6 +101,37 @@ async def whitelist_remove(entry_id: int) -> bool:
         return cur.rowcount > 0
 
 
+async def save_record(user_id: int, transcript: str, duration_sec: int | None, template: str | None = None) -> int:
+    async with get_db() as db:
+        cur = await db.execute(
+            "INSERT INTO records(user_id, transcript, duration_sec, template) VALUES(?, ?, ?, ?);",
+            (user_id, transcript, duration_sec, template),
+        )
+        await db.commit()
+        return cur.lastrowid or 0
+
+
+async def get_user_records(user_id: int, limit: int = 10) -> list[dict]:
+    async with get_db() as db:
+        cur = await db.execute(
+            "SELECT id, duration_sec, transcript, template, created_at FROM records "
+            "WHERE user_id=? ORDER BY created_at DESC LIMIT ?;",
+            (user_id, limit),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+
+async def get_record(record_id: int, user_id: int) -> Optional[dict]:
+    async with get_db() as db:
+        cur = await db.execute(
+            "SELECT id, duration_sec, transcript, template, created_at FROM records "
+            "WHERE id=? AND user_id=?;",
+            (record_id, user_id),
+        )
+        row = await cur.fetchone()
+        return dict(row) if row else None
+
+
 async def whitelist_list() -> list[dict]:
     async with get_db() as db:
         cur = await db.execute(

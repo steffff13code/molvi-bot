@@ -66,9 +66,20 @@ async def init_db() -> None:
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- История расшифровок пользователя (для "Мои записи").
+            CREATE TABLE IF NOT EXISTS records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                duration_sec INTEGER,
+                transcript TEXT NOT NULL,
+                template TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
             CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id, created_at);
             CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, created_at);
+            CREATE INDEX IF NOT EXISTS idx_records_user ON records(user_id, created_at);
             """
         )
 

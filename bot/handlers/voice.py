@@ -14,6 +14,7 @@ from bot.db.queries import (
     has_consent,
     is_whitelisted,
     log_event,
+    save_record,
     upsert_user,
 )
 from bot.keyboards.inline import choose_mode_kb, consent_kb, paywall_kb, result_kb, templates_kb
@@ -190,6 +191,9 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     if duration_sec:
         await add_minutes(user.id, duration_sec / 60.0)
     await log_event(user_id=user.id, type_="recognize", duration_sec=duration_sec)
+
+    # Сохраняем расшифровку в историю пользователя ("Мои записи").
+    await save_record(user.id, transcript, duration_sec)
 
     # Транскрипт держим только в RAM на время сессии (для смены шаблона).
     token = session_store.put(user.id, transcript, duration_sec)

@@ -4,11 +4,12 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_stats, has_consent, set_consent, upsert_user
+from bot.db.queries import get_minutes_used, get_stats, has_consent, is_whitelisted, set_consent, upsert_user
 from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
 from bot.keyboards.reply import (
     BTN_DEVICE,
     BTN_HOME,
+    BTN_MY_RECORDS,
     BTN_TARIFFS,
     BTN_TEMPLATES,
     BTN_TRANSCRIBE,
@@ -136,8 +137,15 @@ async def templates_info(message: types.Message) -> None:
 
 @router.message(F.text == BTN_TARIFFS)
 async def tariffs(message: types.Message) -> None:
+    user = message.from_user
+    used = 0.0
+    wl = False
+    if user:
+        wl = await is_whitelisted(user.id, user.username)
+        if not wl:
+            used = await get_minutes_used(user.id)
     await message.answer(
-        tariffs_text(),
+        tariffs_text(used_minutes=used, whitelisted=wl),
         reply_markup=tariffs_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,
@@ -158,11 +166,11 @@ async def buy_stub(cb: types.CallbackQuery) -> None:
 
 @router.message(F.text == BTN_HOME)
 async def home_handler(message: types.Message) -> None:
+    user = message.from_user
+    name = user.first_name if user and user.first_name else "друг"
     await message.answer(
-        f"🏠 <b>Главный сайт МОЛВИ</b>\n\n"
-        f"AI-расшифровка аудио и умный диктофон — всё на одном сайте.\n\n"
-        f"🌐 <a href=\"{settings.site_url}\">{settings.site_url}</a>",
-        reply_markup=device_kb(),
+        _welcome(name),
+        reply_markup=main_menu_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,
     )

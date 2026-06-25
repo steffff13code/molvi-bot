@@ -8,6 +8,7 @@ from bot.api import start_api
 from bot.config import settings
 from bot.db.database import init_db
 from bot.handlers.help import router as help_router
+from bot.handlers.records import router as records_router
 from bot.handlers.start import router as start_router
 from bot.handlers.voice import router as voice_router
 from bot.logging import setup_logging
@@ -39,6 +40,7 @@ async def main() -> None:
     dp = Dispatcher()
 
     dp.include_router(start_router)
+    dp.include_router(records_router)
     dp.include_router(voice_router)
     dp.include_router(help_router)
 
