@@ -96,9 +96,16 @@ button{cursor:pointer;border:none;background:none;font-family:inherit}
 }
 :root.light{
   --bg:#F3F6FC;--s1:#FFFFFF;--s2:#EBF0F9;
-  --bd:#D0DAEA;--bd2:#BDC9DF;--tx:#0A1326;--tx2:#3A5070;--tx3:#7A93B8
+  --bd:#C5CFDF;--bd2:#B0BDCF;--tx:#08111F;--tx2:#2E3F60;--tx3:#6A7FA0
 }
 :root.light body{background:var(--bg);color:var(--tx)}
+:root.light .hero-price{color:var(--tx)}
+:root.light .sc-out{background:rgba(45,110,245,.06);border-color:rgba(45,110,245,.2)}
+:root.light .sc-when{color:var(--tx)}
+:root.light .tg-mock{background:#E4EAF4;box-shadow:0 24px 60px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.07)}
+:root.light .tg-head,:root.light .tg-footer{background:#D4DDF0}
+:root.light .tg-msg.b{background:rgba(0,0,0,.06);color:var(--tx)}
+:root.light .tg-body{background:#E4EAF4}
 
 /* ── GLOBAL GRID BACKGROUND ── */
 body::before{
@@ -220,7 +227,7 @@ body::before{
 /* HERO LEFT COLUMN */
 .hero-left-col{padding-left:40px}
 .hero-h1-main{font-size:64px;width:600px;max-width:100%}
-.hero-price{font-size:32px;font-weight:700;color:#fff;letter-spacing:-.01em;white-space:nowrap;display:block}
+.hero-price{font-size:32px;font-weight:700;color:var(--tx);letter-spacing:-.01em;white-space:nowrap;display:block}
 @media(max-width:960px){
   .hero-left-col{padding-left:0}
   .hero-h1-main{font-size:clamp(1.9rem,6vw,3rem);width:auto}
@@ -346,11 +353,51 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
 @keyframes tgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .tg-anim{animation:tgIn .4s ease both}
 
+/* ── SCROLL REVEAL ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s cubic-bezier(.16,1,.3,1),transform .65s cubic-bezier(.16,1,.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal.delay-1{transition-delay:.1s}
+.reveal.delay-2{transition-delay:.2s}
+.reveal.delay-3{transition-delay:.3s}
+
+/* ── TG 3D ── */
+#tgParallax{transform-style:preserve-3d;transition:transform .5s ease}
+
+/* ── HERO SECTION GRADIENT EXIT ── */
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to bottom,transparent,rgba(9,14,26,1));pointer-events:none;z-index:2}
+:root.light .hero::after{background:linear-gradient(to bottom,transparent,rgba(255,255,255,1))}
+
+/* ── MOBILE COUNTERS (hidden on desktop) ── */
+.mob-counters{display:none}
+.mob-cnt-card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:18px 12px;text-align:center}
+.mob-cnt-num{font-size:clamp(20px,5.5vw,28px);font-weight:900;background:linear-gradient(135deg,#2563EB,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block}
+.mob-cnt-label{font-size:11px;color:var(--tx3);margin-top:5px;line-height:1.4}
+
+/* ── CAROUSEL (hidden on desktop) ── */
+.sc-dots{display:none;justify-content:center;gap:7px;margin-top:16px}
+.sc-dot{width:7px;height:7px;border-radius:50%;background:var(--bd);transition:background .3s,transform .3s;cursor:pointer}
+.sc-dot.active{background:var(--blue);transform:scale(1.3)}
+.sc-nav{display:none;justify-content:center;gap:12px;margin-top:10px}
+.sc-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--bd);background:var(--s1);color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s,background .2s}
+.sc-btn:hover{border-color:var(--blue);background:var(--blue-d)}
+
+/* ── SEC-ALT subtle grid visibility ── */
+.sec-alt{background:rgba(9,14,26,.98)}
+:root.light .sec-alt{background:rgba(255,255,255,.98)}
+
 @media(max-width:960px){
   .nav-links,.nav-right .btn-ghost,.nav-desk{display:none}
   .mob-btn{display:flex}
+  .nav-in{padding:0 16px}
+  .nav-right{gap:8px}
   .hero-inner{grid-template-columns:1fr}
-  .tg-wrap{display:none}
+  .hero-left-col{text-align:center}
+  .hero-cta-row{justify-content:center}
+  .hero-note{justify-content:center}
+  .hero-stats{display:none}
+  .mob-counters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0 0}
+  .tg-wrap{display:flex;justify-content:center;margin-top:36px}
+  .tg-mock{transform:scale(0.82);transform-origin:top center}
   .step-wrap{grid-template-columns:1fr;gap:24px}
   .step-wrap::after{display:none}
   .g3,.g2,.price-grid{grid-template-columns:1fr}
@@ -382,8 +429,11 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
   .pill{font-size:10px;padding:4px 12px}
   .step{padding:0 8px}
   .step-num{width:48px;height:48px;font-size:18px}
-  .sc-grid{grid-template-columns:1fr}
-  .sc-card{padding:16px}
+  .sc-grid{display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:12px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;grid-template-columns:unset}
+  .sc-grid::-webkit-scrollbar{display:none}
+  .sc-card{min-width:calc(100vw - 48px);scroll-snap-align:center;flex-shrink:0;padding:16px}
+  .sc-dots{display:flex}
+  .sc-nav{display:flex}
   .price-free,.price-paid{padding:28px 22px}
   .price-big{font-size:clamp(2rem,9vw,3rem)}
   .fcta-wrap{padding:40px 22px;border-radius:16px}
@@ -469,7 +519,7 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
 
       <!-- LEFT -->
       <div class="hero-left-col">
-        <h1 class="hero-h1 hero-h1-main">Аудио в текст<br><span class="grad">от 50 ₽ в час!</span><br><span class="hero-price">Первые 60 минут бесплатно!</span></h1>
+        <h1 class="hero-h1 hero-h1-main"><span id="tw-line1">Аудио в текст</span><br><span class="grad" id="tw-line2">от 50 ₽ в час!</span><br><span class="hero-price" id="tw-line3">Первые 60 минут бесплатно!</span></h1>
         <p class="hero-sub">Отправьте аудио в <a href="https://t.me/molviai_bot" target="_blank" rel="noopener">бот МОЛВИ</a> — получите расшифровку с кратким содержанием и задачами.</p>
         <div class="hero-cta-row">
           <a href="https://t.me/molviai_bot" class="btn btn-blue btn-lg" target="_blank" rel="noopener">
@@ -496,10 +546,25 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
             <div class="hs-lbl">за 60 мин записи</div>
           </div>
         </div>
+        <!-- MOBILE COUNTERS (visible only ≤960px) -->
+        <div class="mob-counters">
+          <div class="mob-cnt-card reveal">
+            <span class="mob-cnt-num" data-from="250" data-to="50" data-suffix=" ₽">250 ₽</span>
+            <div class="mob-cnt-label">за час записи</div>
+          </div>
+          <div class="mob-cnt-card reveal delay-1">
+            <span class="mob-cnt-num" data-from="30" data-to="60" data-suffix=" мин">30 мин</span>
+            <div class="mob-cnt-label">бесплатно</div>
+          </div>
+          <div class="mob-cnt-card reveal delay-2">
+            <span class="mob-cnt-num" data-from="0" data-to="5" data-suffix=" мин">0 мин</span>
+            <div class="mob-cnt-label">за час записи</div>
+          </div>
+        </div>
       </div>
 
       <!-- RIGHT: TG Mockup -->
-      <div class="tg-wrap">
+      <div class="tg-wrap" id="tgParallax">
         <div class="tg-glow"></div>
         <div class="tg-mock">
           <div class="tg-head">
@@ -545,17 +610,17 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
       <h2 class="h2">3 шага — и текст готов</h2>
     </div>
     <div class="step-wrap">
-      <div class="step">
+      <div class="step reveal">
         <div class="step-num">1</div>
         <h3 class="h3" style="font-size:19px">Откройте бот</h3>
         <p style="color:var(--tx2);font-size:15px;line-height:1.7">Перейдите в <strong>@molviai_bot</strong> — ничего устанавливать не нужно. Работает прямо в Telegram.</p>
       </div>
-      <div class="step">
+      <div class="step reveal delay-1">
         <div class="step-num">2</div>
         <h3 class="h3" style="font-size:19px">Отправьте запись</h3>
         <p style="color:var(--tx2);font-size:15px;line-height:1.7">Аудио, видео, голосовое — из любого мессенджера или с диктофона. Просто перешлите в чат.</p>
       </div>
-      <div class="step">
+      <div class="step reveal delay-2">
         <div class="step-num">3</div>
         <h3 class="h3" style="font-size:19px">Получите текст</h3>
         <p style="color:var(--tx2);font-size:15px;line-height:1.7">Через 3–5 минут — чистый текст с пунктуацией, краткое содержание, задачи. Скачайте в TXT, PDF, DOCX.</p>
@@ -577,54 +642,60 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
     </div>
     <div class="sc-grid">
 
-      <div class="sc-card">
+      <div class="sc-card reveal">
         <div class="sc-trigger"><div class="sc-ico">🗓</div><div class="sc-when">После совещания</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Протокол встречи</div><div class="sc-tags"><span>Участники</span><span>Решения</span><span>Задачи и сроки</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-1">
         <div class="sc-trigger"><div class="sc-ico">📞</div><div class="sc-when">После звонка с клиентом</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Итоги переговоров</div><div class="sc-tags"><span>Договорённости</span><span>Следующий шаг</span><span>Открытые вопросы</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-2">
         <div class="sc-trigger"><div class="sc-ico">🎤</div><div class="sc-when">После интервью</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Материал для публикации</div><div class="sc-tags"><span>Тезисы</span><span>Лучшие цитаты</span><span>Заголовки</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-3">
         <div class="sc-trigger"><div class="sc-ico">⚖️</div><div class="sc-when">После юр. консультации</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Правовой документ</div><div class="sc-tags"><span>Позиция</span><span>Риски</span><span>Рекомендации</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal">
         <div class="sc-trigger"><div class="sc-ico">🎓</div><div class="sc-when">После лекции или вебинара</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Конспект</div><div class="sc-tags"><span>Тезисы</span><span>Термины</span><span>Главный вывод</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-1">
         <div class="sc-trigger"><div class="sc-ico">💼</div><div class="sc-when">После собеседования</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Карточка кандидата</div><div class="sc-tags"><span>Опыт</span><span>Сильные стороны</span><span>Сомнения</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-2">
         <div class="sc-trigger"><div class="sc-ico">🧠</div><div class="sc-when">После голосовой заметки</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Структурированные идеи</div><div class="sc-tags"><span>Мысли</span><span>To-do</span><span>Приоритеты</span></div></div>
       </div>
 
-      <div class="sc-card">
+      <div class="sc-card reveal delay-3">
         <div class="sc-trigger"><div class="sc-ico">💬</div><div class="sc-when">После сессии с психологом</div></div>
         <div class="sc-divider"><span>МОЛВИ даёт</span></div>
         <div class="sc-out"><div class="sc-out-title">Бережное резюме</div><div class="sc-tags"><span>Темы</span><span>Инсайты</span><span>К чему вернуться</span></div></div>
       </div>
 
+    </div>
+    <!-- CAROUSEL CONTROLS (visible only on mobile ≤640px) -->
+    <div class="sc-dots" id="scDots"></div>
+    <div class="sc-nav">
+      <button class="sc-btn" id="scPrev">&#8249;</button>
+      <button class="sc-btn" id="scNext">&#8250;</button>
     </div>
     <div class="tc" style="margin-top:40px">
       <a href="https://t.me/molviai_bot" class="btn btn-blue btn-lg" target="_blank" rel="noopener">Выбрать шаблон бесплатно</a>
@@ -642,7 +713,7 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
     <div class="price-grid">
 
       <!-- FREE -->
-      <div class="price-free">
+      <div class="price-free reveal">
         <div class="pill pill-blue" style="margin-bottom:20px">🎁 Бесплатно навсегда</div>
         <div class="price-big">60 минут</div>
         <p style="color:var(--tx2);font-size:15px;line-height:1.7">расшифровки — бесплатно для каждого нового пользователя. Без карты. Без регистрации. Прямо сейчас.</p>
@@ -655,7 +726,7 @@ footer{background:var(--s1);border-top:1px solid var(--bd);padding:56px 0 28px;p
       </div>
 
       <!-- PAID -->
-      <div class="price-paid">
+      <div class="price-paid reveal delay-1">
         <div class="pill pill-blue" style="margin-bottom:20px">Оплата по факту</div>
         <div class="price-big">от 50 ₽<br><span style="font-size:0.42em;letter-spacing:-.01em;color:var(--tx2);font-weight:600;font-family:'Golos Text',sans-serif">/час записи</span></div>
         <p style="color:var(--tx2);font-size:15px;line-height:1.7">Платите только за то, что расшифровали. Никаких подписок и обязательств — покупайте минуты когда нужно.</p>
@@ -865,7 +936,7 @@ var faqData = [
 var faqList = document.getElementById('faqList');
 faqData.forEach(function(item, i){
   var div = document.createElement('div');
-  div.className = 'faq-item';
+  div.className = 'faq-item reveal';
   div.innerHTML =
     '<button class="faq-btn" onclick="toggleFaq(this)" aria-expanded="false">' +
       '<span>' + item.q + '</span>' +
@@ -874,6 +945,126 @@ faqData.forEach(function(item, i){
     '<div class="faq-body">' + item.a + '</div>';
   faqList.appendChild(div);
 });
+
+// ── TYPEWRITER ANIMATION ──
+(function(){
+  var lines = ['Аудио в текст', 'от 50 ₽ в час!', 'Первые 60 минут бесплатно!'];
+  var ids = ['tw-line1','tw-line2','tw-line3'];
+  var l = 0, c = 0;
+  ids.forEach(function(id){ var el = document.getElementById(id); if(el) el.textContent = ''; });
+  function type(){
+    if(l >= lines.length) return;
+    var el = document.getElementById(ids[l]);
+    if(!el) return;
+    if(c <= lines[l].length){
+      el.textContent = lines[l].substring(0, c);
+      c++;
+      setTimeout(type, 50);
+    } else {
+      l++; c = 0;
+      setTimeout(type, 180);
+    }
+  }
+  setTimeout(type, 80);
+})();
+
+// ── 3D TG MOCKUP PARALLAX ──
+(function(){
+  var el = document.getElementById('tgParallax');
+  if(!el) return;
+  var ticking = false;
+  document.addEventListener('mousemove', function(e){
+    if(window.innerWidth < 960) return;
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var rect = el.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      var rx = ((e.clientY - cy) / (window.innerHeight / 2)) * 8;
+      var ry = ((e.clientX - cx) / (window.innerWidth / 2)) * -8;
+      el.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+      ticking = false;
+    });
+  });
+  document.addEventListener('mouseleave', function(){
+    el.style.transform = '';
+  });
+})();
+
+// ── SCROLL REVEAL ──
+(function(){
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, {threshold: 0.08, rootMargin: '0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
+})();
+
+// ── ANIMATED COUNTERS (mobile) ──
+(function(){
+  var cnts = document.querySelectorAll('.mob-cnt-num[data-to]');
+  if(!cnts.length) return;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting) return;
+      var el = entry.target;
+      var from = parseInt(el.dataset.from || '0');
+      var to = parseInt(el.dataset.to);
+      var suffix = el.dataset.suffix || '';
+      var dur = 1400;
+      var t0 = performance.now();
+      function tick(now){
+        var p = Math.min((now - t0) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(from + (to - from) * eased) + suffix;
+        if(p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+      obs.unobserve(el);
+    });
+  }, {threshold: 0.6});
+  cnts.forEach(function(el){ obs.observe(el); });
+})();
+
+// ── SCENARIO CAROUSEL (mobile) ──
+(function(){
+  var grid = document.querySelector('.sc-grid');
+  var dotsWrap = document.getElementById('scDots');
+  var prevBtn = document.getElementById('scPrev');
+  var nextBtn = document.getElementById('scNext');
+  if(!grid || !dotsWrap) return;
+  var cards = grid.querySelectorAll('.sc-card');
+  var n = cards.length;
+  for(var i = 0; i < n; i++){
+    var d = document.createElement('div');
+    d.className = 'sc-dot' + (i === 0 ? ' active' : '');
+    dotsWrap.appendChild(d);
+  }
+  function updateDots(){
+    var cw = grid.clientWidth || 1;
+    var idx = Math.round(grid.scrollLeft / cw);
+    idx = Math.max(0, Math.min(idx, n - 1));
+    dotsWrap.querySelectorAll('.sc-dot').forEach(function(d, i){
+      d.classList.toggle('active', i === idx);
+    });
+  }
+  grid.addEventListener('scroll', updateDots, {passive: true});
+  if(prevBtn) prevBtn.addEventListener('click', function(){
+    grid.scrollBy({left: -grid.clientWidth, behavior: 'smooth'});
+  });
+  if(nextBtn) nextBtn.addEventListener('click', function(){
+    grid.scrollBy({left: grid.clientWidth, behavior: 'smooth'});
+  });
+  dotsWrap.addEventListener('click', function(e){
+    if(e.target.classList.contains('sc-dot')){
+      var dots = Array.from(dotsWrap.querySelectorAll('.sc-dot'));
+      var idx = dots.indexOf(e.target);
+      if(idx >= 0) grid.scrollTo({left: idx * grid.clientWidth, behavior: 'smooth'});
+    }
+  });
+})();
 </script>
 <script src="/cookie.js" defer></script>
 </body>
