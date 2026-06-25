@@ -20,7 +20,7 @@ from bot.db.queries import (
 from bot.keyboards.inline import choose_mode_kb, consent_kb, paywall_kb, result_kb, templates_kb
 from bot.keyboards.reply import main_menu_kb
 from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
-from bot.services.audio import AUDIO_DIR, ensure_dirs
+from bot.services.audio import AUDIO_DIR, ensure_dirs, trim_audio
 from bot.services.export import build_export
 from bot.services.pricing import FREE_MINUTES, paywall_text
 from bot.services.providers import STTQuotaError, get_llm, get_stt
@@ -32,6 +32,33 @@ router = Router()
 
 _stt = get_stt()
 _llm = get_llm()
+
+
+async def _recover_session(cb: types.CallbackQuery) -> str | None:
+    """Когда сессия истекла — восстанавливает из последней записи БД.
+
+    Возвращает новый token или None если записей нет.
+    Отправляет сообщение пользователю с выбором действия.
+    """
+    from bot.db.queries import get_user_records
+    user = cb.from_user
+    if not user or not cb.message:
+        return None
+    records = await get_user_records(user.id, limit=1)
+    if not records:
+        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        return None
+    rec = records[0]
+    new_token = session_store.put(user.id, rec["transcript"] or "", rec["duration_sec"])
+    from bot.keyboards.inline import choose_mode_kb
+    await cb.message.answer(
+        "⏰ <b>Сессия истекла</b> — восстановил вашу последнюю расшифровку.\n"
+        "Выберите, что с ней сделать:",
+        parse_mode="HTML",
+        reply_markup=choose_mode_kb(new_token),
+    )
+    await cb.answer()
+    return new_token
 
 # Поддерживаемые расширения для документов (на случай, если файл прислали «файлом»).
 _SUPPORTED_DOC_EXTS = {
@@ -144,11 +171,15 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
 
-    # Лимит/whitelist: безлимит для whitelist, иначе бесплатные FREE_MINUTES.
+    # Лимит/whitelist
     whitelisted = await is_whitelisted(user.id, user.username)
+    remaining_sec: int | None = None  # None = безлимит
+    trim_needed = False
+
     if not whitelisted:
         used = await get_minutes_used(user.id)
-        if used >= FREE_MINUTES:
+        remaining_min = FREE_MINUTES - used
+        if remaining_min <= 0:
             await log_event(user_id=user.id, type_="paywall")
             await message.answer(
                 paywall_text(),
@@ -157,22 +188,46 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
                 reply_markup=paywall_kb(),
             )
             return
+        remaining_sec = int(remaining_min * 60)
+        # Если длительность известна и превышает остаток — обрежем
+        if duration_sec is not None and duration_sec > remaining_sec:
+            trim_needed = True
 
-    dur_text = f" ({duration_sec} сек)" if duration_sec else ""
-    status_msg = await message.answer(
-        f"⏳ Принял запись{dur_text}. Идёт расшифровка — подождите, "
-        "это может занять некоторое время…"
-    )
+    dur_text = f" ({duration_sec // 60} мин {duration_sec % 60} с)" if duration_sec else ""
+    if trim_needed and remaining_sec:
+        rem_min = remaining_sec // 60
+        rem_sec = remaining_sec % 60
+        status_msg = await message.answer(
+            f"⏳ Принял запись{dur_text}.\n"
+            f"⚠️ Вашего лимита хватит на <b>{rem_min} мин {rem_sec} с</b> — "
+            f"расшифрую только эту часть. Идёт расшифровка…",
+            parse_mode="HTML",
+        )
+    else:
+        status_msg = await message.answer(
+            f"⏳ Принял запись{dur_text}. Идёт расшифровка — подождите…"
+        )
 
     uid = uuid.uuid4().hex
-    source_path = str(AUDIO_DIR / f"{uid}_src{_ext_from_name(file_name) or '.mp3'}")
+    ext = _ext_from_name(file_name) or ".mp3"
+    source_path = str(AUDIO_DIR / f"{uid}_src{ext}")
+    trimmed_path = str(AUDIO_DIR / f"{uid}_trim{ext}")
 
     try:
         tg_file = await bot.get_file(tg_file_id)  # type: ignore[arg-type]
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
 
+        # Обрезка если не хватает лимита
+        stt_path = source_path
+        actual_duration_sec = duration_sec
+        if trim_needed and remaining_sec:
+            trimmed_dur = await trim_audio(source_path, trimmed_path, remaining_sec)
+            if trimmed_dur < (duration_sec or 0):
+                stt_path = trimmed_path
+                actual_duration_sec = trimmed_dur
+
         transcript = await with_retries(
-            lambda: _stt.transcribe(source_path, duration_sec), attempts=3, base_delay=2.0
+            lambda: _stt.transcribe(stt_path, actual_duration_sec), attempts=3, base_delay=2.0
         )
     except STTQuotaError:
         logger.error("STT quota exhausted (402)")
@@ -189,17 +244,19 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
     finally:
-        # Вариант А: исходный файл удаляется сразу после распознавания.
-        try:
-            if os.path.exists(source_path):
-                os.remove(source_path)
-        except Exception:
-            pass
+        # Вариант А: файлы удаляются сразу после распознавания.
+        for p in (source_path, trimmed_path):
+            try:
+                if os.path.exists(p):
+                    os.remove(p)
+            except Exception:
+                pass
 
-    # Учёт минут (метаданные) + событие. Контент НЕ сохраняется.
-    if duration_sec:
-        await add_minutes(user.id, duration_sec / 60.0)
-    await log_event(user_id=user.id, type_="recognize", duration_sec=duration_sec)
+    # Учёт минут: списываем только реально расшифрованную часть.
+    billed_sec = actual_duration_sec if trim_needed else duration_sec
+    if billed_sec:
+        await add_minutes(user.id, billed_sec / 60.0)
+    await log_event(user_id=user.id, type_="recognize", duration_sec=billed_sec)
 
     # Сохраняем расшифровку в историю пользователя ("Мои записи").
     await save_record(user.id, transcript, duration_sec)
@@ -251,8 +308,10 @@ async def on_change_template(cb: types.CallbackQuery) -> None:
     if not cb.message:
         return
     token = cb.data.split(":", 1)[1]
-    # Повторная обработка БЕЗ повторного распознавания — транскрипт берётся из RAM.
-    await cb.message.answer("📋 Выберите другой шаблон:", reply_markup=templates_kb(token))
+    if not session_store.get(token, cb.from_user.id if cb.from_user else 0):
+        await _recover_session(cb)
+        return
+    await cb.message.answer("📋 Выберите другой шаблон:", reply_markup=choose_mode_kb(token))
     await cb.answer()
 
 
@@ -264,7 +323,7 @@ async def on_download(cb: types.CallbackQuery) -> None:
     _, token, fmt = cb.data.split(":", 2)
     entry = session_store.get(token, user.id)
     if not entry:
-        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        await _recover_session(cb)
         return
     await cb.answer("Готовлю файл…")
     try:
@@ -289,7 +348,7 @@ async def on_get_as_message(cb: types.CallbackQuery) -> None:
     token = cb.data.split(":", 1)[1]
     entry = session_store.get(token, user.id)
     if not entry:
-        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        await _recover_session(cb)
         return
     await cb.answer()
     full = _watermarked(entry.transcript)
@@ -303,7 +362,7 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
         return
     entry = session_store.get(token, user.id)
     if not entry:
-        await cb.answer("Сессия истекла. Пришлите запись заново.", show_alert=True)
+        await _recover_session(cb)
         return
 
     await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)

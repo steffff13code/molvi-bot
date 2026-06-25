@@ -5,8 +5,9 @@ from datetime import datetime
 from aiogram import F, Router, types
 
 from bot.db.queries import get_record, get_user_records
+from bot.keyboards.inline import choose_mode_kb, result_kb
 from bot.keyboards.reply import BTN_MY_RECORDS, main_menu_kb
-from bot.utils import split_telegram_text
+from bot.services.session_store import session_store
 
 router = Router()
 
@@ -61,7 +62,7 @@ async def my_records(message: types.Message) -> None:
             )
         ])
 
-    lines.append("\n👆 Нажмите на запись, чтобы получить полный текст.")
+    lines.append("\n👆 Нажмите на запись, чтобы выбрать что с ней сделать.")
 
     kb = types.InlineKeyboardMarkup(inline_keyboard=buttons)
     await message.answer(
@@ -92,11 +93,12 @@ async def view_record(cb: types.CallbackQuery) -> None:
 
     dur = _fmt_duration(rec["duration_sec"])
     date = _fmt_date(rec["created_at"])
-    header = f"📄 <b>Расшифровка — {date}"
-    if dur:
-        header += f" · {dur}"
-    header += "</b>\n\n"
+    dur_str = f" · {dur}" if dur else ""
 
-    text = header + (rec["transcript"] or "")
-    for part in split_telegram_text(text):
-        await cb.message.answer(part, parse_mode="HTML")
+    # Кладём расшифровку в сессию и показываем меню действий (как при первой расшифровке)
+    token = session_store.put(user.id, rec["transcript"] or "", rec["duration_sec"])
+    await cb.message.answer(
+        f"📄 <b>Запись от {date}{dur_str}</b>\nЧто сделать с этой расшифровкой?",
+        parse_mode="HTML",
+        reply_markup=choose_mode_kb(token),
+    )

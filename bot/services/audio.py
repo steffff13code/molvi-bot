@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 
 from pydub import AudioSegment
 
@@ -28,3 +29,27 @@ async def convert_to_pcm(input_path: str, output_path: str) -> None:
 
 # Алиас для обратной совместимости с voice.py
 convert_to_wav = convert_to_pcm
+
+
+def _sync_trim(input_path: str, output_path: str, max_sec: int) -> int:
+    """Обрезает аудио до max_sec секунд. Возвращает итоговую длительность в секундах."""
+    audio = AudioSegment.from_file(input_path)
+    actual_sec = len(audio) // 1000
+    if actual_sec <= max_sec:
+        # Файл короче лимита — обрезка не нужна
+        return actual_sec
+    trimmed = audio[: max_sec * 1000]
+    ext = os.path.splitext(output_path)[1].lstrip(".") or "mp3"
+    if ext in ("oga", "opus"):
+        ext = "ogg"
+    trimmed.export(output_path, format=ext)
+    return max_sec
+
+
+async def trim_audio(input_path: str, output_path: str, max_sec: int) -> int:
+    """Асинхронная обёртка: обрезает input_path до max_sec сек, сохраняет в output_path.
+
+    Возвращает итоговую длительность (≤ max_sec).
+    Если обрезка не нужна — возвращает реальную длительность, output_path не создаётся.
+    """
+    return await asyncio.to_thread(_sync_trim, input_path, output_path, max_sec)

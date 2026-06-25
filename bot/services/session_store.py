@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass
 
-DEFAULT_TTL_SEC = 30 * 60  # 30 минут
+DEFAULT_TTL_SEC = 24 * 3600  # 24 часа — чтобы кнопки работали в течение дня
 
 
 @dataclass
