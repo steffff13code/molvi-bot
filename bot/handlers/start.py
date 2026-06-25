@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats, has_consent, is_whitelisted, set_consent, upsert_user
+from bot.db.queries import get_minutes_used, get_stats, get_stats_full, has_consent, is_whitelisted, set_consent, upsert_user
 from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
 from bot.keyboards.reply import (
     BTN_DEVICE,
@@ -176,20 +176,163 @@ async def home_handler(message: types.Message) -> None:
     )
 
 
+_TEMPLATE_NAMES = {
+    "plain":     "Просто расшифровка",
+    "protocol":  "Протокол встречи",
+    "call":      "Звонок / переговоры",
+    "lecture":   "Конспект лекции",
+    "legal":     "Юр. консультация",
+    "hr":        "Собеседование HR",
+    "interview": "Интервью",
+    "note":      "Личная заметка",
+    "therapy":   "Сессия с психологом",
+}
+
+_PERIOD_LABELS = {
+    1: "1 день",
+    3: "3 дня",
+    5: "5 дней",
+    7: "7 дней",
+    30: "30 дней",
+    0: "Всё время",
+}
+
+
+def _pct(num: int, denom: int) -> str:
+    if denom == 0:
+        return "—"
+    return f"{round(num / denom * 100)}%"
+
+
+def _fmt_time_ago(iso: str | None) -> str:
+    """Возвращает «N часов назад» / «N дней назад» для ISO-метки из SQLite."""
+    if not iso:
+        return "никогда"
+    import datetime
+    try:
+        dt = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        delta = datetime.datetime.now(datetime.timezone.utc) - dt
+        secs = int(delta.total_seconds())
+        if secs < 60:
+            return "только что"
+        if secs < 3600:
+            return f"{secs // 60} мин назад"
+        if secs < 86400:
+            h = secs // 3600
+            return f"{h} {'час' if h == 1 else 'ч'} назад"
+        d = secs // 86400
+        return f"{d} {'день' if d == 1 else 'дн'} назад"
+    except Exception:
+        return iso[:16]
+
+
+def _build_stats_text(s: dict) -> str:
+    period_label = _PERIOD_LABELS.get(s["period_days"], f"{s['period_days']} дней")
+    total = s["users_total"]
+    new = s["users_new"]
+    audio = s["users_audio"]
+    audio_total = s["users_audio_total"]
+    pw_users = s["users_paywall"]
+
+    # Воронка: база — все пользователи за период (или всего)
+    funnel_base = total if s["period_days"] == 0 else new if new > 0 else total
+
+    lines = [
+        f"📊 <b>Статистика МОЛВИ — {period_label}</b>",
+        "<i>(ваш аккаунт исключён из всех счётчиков)</i>",
+        "",
+        "━━━━━━━ 👥 ПОЛЬЗОВАТЕЛИ ━━━━━━━",
+        f"• Всего в базе: <b>{total}</b>",
+        f"• Новых за период: <b>{new}</b>",
+        f"• Отправляли аудио за период: <b>{audio}</b>",
+        f"• Всего когда-либо отправляли: <b>{audio_total}</b>",
+        f"• DAU / WAU / MAU: <b>{s['dau']} / {s['wau']} / {s['mau']}</b>",
+        "",
+        "━━━━━━━ 🎙 РАСШИФРОВКИ ━━━━━━━",
+        f"• Файлов принято: <b>{s['files']}</b>",
+        f"• Минут расшифровано: <b>{s['minutes']}</b>",
+        f"• Средняя длина записи: <b>{s['avg_minutes']} мин</b>",
+        f"• Самая длинная запись: <b>{s['max_minutes']} мин</b>",
+        f"• Последняя расшифровка: <b>{_fmt_time_ago(s['last_recognize_at'])}</b>",
+    ]
+
+    # Шаблоны
+    if s["templates"]:
+        lines += ["", "━━━━━━━ 📋 ШАБЛОНЫ ━━━━━━━"]
+        for key, cnt in s["templates"].items():
+            name = _TEMPLATE_NAMES.get(key, key)
+            lines.append(f"• {name}: <b>{cnt}</b>")
+
+    # Экспорт
+    if s["exports_total"] > 0:
+        lines += ["", "━━━━━━━ 📁 ЭКСПОРТ ━━━━━━━"]
+        parts = [f"{fmt.upper()}: {cnt}" for fmt, cnt in s["formats"].items()]
+        lines.append(f"• {' · '.join(parts)}")
+        lines.append(f"• Всего скачиваний: <b>{s['exports_total']}</b>")
+
+    # Воронка конверсии
+    lines += [
+        "",
+        "━━━━━━━ 📈 ВОРОНКА ━━━━━━━",
+        f"• Запустили бот: <b>{total}</b>",
+        f"• Отправили аудио: <b>{audio_total}</b> ({_pct(audio_total, total)} от всех)",
+        f"• Использовали за период: <b>{audio}</b> ({_pct(audio, total)} от всех)",
+        f"• Упёрлись в лимит: <b>{pw_users}</b> ({_pct(pw_users, audio if audio else total)})",
+        "• Оплатили: <b>0</b> — эквайринг не подключён",
+    ]
+
+    # Пэйвол и ошибки
+    lines += [
+        "",
+        "━━━━━━━ ⚙️ СИСТЕМА ━━━━━━━",
+        f"• Пэйвол-срабатываний: <b>{s['paywall_hits']}</b>",
+        f"• Ошибок распознавания: <b>{s['errors']}</b>",
+        f"• В whitelist (безлимит): <b>{s['whitelist_count']}</b>",
+    ]
+
+    return "\n".join(lines)
+
+
+def _stats_period_kb(current: int) -> types.InlineKeyboardMarkup:
+    periods = [1, 3, 5, 7, 30, 0]
+    labels = {1: "1д", 3: "3д", 5: "5д", 7: "7д", 30: "30д", 0: "Всё"}
+    buttons = [
+        types.InlineKeyboardButton(
+            text=f"[{labels[p]}]" if p == current else labels[p],
+            callback_data=f"stats_period:{p}",
+        )
+        for p in periods
+    ]
+    return types.InlineKeyboardMarkup(inline_keyboard=[buttons])
+
+
 @router.message(Command("stats2sstef"))
 async def stats_cmd(message: types.Message) -> None:
     user = message.from_user
     if not user or not settings.admin_id or user.id != settings.admin_id:
-        return  # доступно только владельцу
-    s = await get_stats(30)
-    tpl = "\n".join(f"   • {k}: {v}" for k, v in s["templates"].items()) or "   —"
-    text = (
-        "📊 <b>Статистика (30 дней)</b>\n\n"
-        f"👥 Пользователей всего: {s['users_total']} (новых: {s['users_new']})\n"
-        f"📈 DAU/WAU/MAU: {s['dau']} / {s['wau']} / {s['mau']}\n"
-        f"🎧 Файлов: {s['files']} · минут: {s['minutes']} · ср.длина: {s['avg_minutes']} мин\n"
-        f"🚧 Пэйвол: {s['paywall_hits']} · ⚠️ ошибок: {s['errors']}\n"
-        f"⭐ В whitelist: {s['whitelist_count']}\n\n"
-        f"<b>Шаблоны:</b>\n{tpl}"
+        return
+    s = await get_stats_full(days=7, exclude_admin=True)
+    await message.answer(
+        _build_stats_text(s),
+        parse_mode="HTML",
+        reply_markup=_stats_period_kb(7),
     )
-    await message.answer(text, parse_mode="HTML")
+
+
+@router.callback_query(F.data.startswith("stats_period:"))
+async def stats_period_cb(callback: types.CallbackQuery) -> None:
+    user = callback.from_user
+    if not user or not settings.admin_id or user.id != settings.admin_id:
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+    days = int(callback.data.split(":")[1])
+    s = await get_stats_full(days=days, exclude_admin=True)
+    text = _build_stats_text(s)
+    kb = _stats_period_kb(days)
+    try:
+        await callback.message.edit_text(text, parse_mode="HTML", reply_markup=kb)
+    except Exception:
+        pass
+    await callback.answer()

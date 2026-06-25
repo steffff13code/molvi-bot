@@ -159,7 +159,20 @@ async def log_event(
 
 
 async def get_stats(days: int = 30) -> dict:
-    """Агрегаты для админки и /stats (без какого-либо контента)."""
+    """Агрегаты для веб-админки (без контента)."""
+    return await get_stats_full(days, exclude_admin=False)
+
+
+async def get_stats_full(days: int = 30, exclude_admin: bool = True) -> dict:
+    """Детальная статистика для Telegram-команды /stats.
+
+    days=0 означает «за всё время».
+    exclude_admin=True исключает ADMIN_ID из всех пользовательских счётчиков.
+    """
+    from bot.config import settings  # локальный импорт во избежание цикличности
+
+    admin_id: int = settings.admin_id if exclude_admin and settings.admin_id else 0
+
     async with get_db() as db:
         async def scalar(sql: str, params: tuple = ()) -> float:
             cur = await db.execute(sql, params)
@@ -167,77 +180,128 @@ async def get_stats(days: int = 30) -> dict:
             val = row[0] if row else 0
             return float(val) if val is not None else 0.0
 
-        period = f"-{int(days)} days"
+        # Параметры фильтра по времени
+        if days > 0:
+            since = f"-{int(days)} days"
+            tf_u = "AND created_at >= datetime('now', ?)"       # для таблицы users
+            tf_e = "AND created_at >= datetime('now', ?)"       # для таблицы events
+            p_u = (since,)
+            p_e = (since,)
+        else:
+            tf_u = tf_e = ""
+            p_u = p_e = ()
 
-        total_users = int(await scalar("SELECT COUNT(*) FROM users;"))
-        new_users = int(await scalar(
-            "SELECT COUNT(*) FROM users WHERE created_at >= datetime('now', ?);", (period,)
+        # Фильтр исключения админа
+        excl_u = f"AND user_id != {admin_id}" if admin_id else ""
+        excl_e = f"AND user_id != {admin_id}" if admin_id else ""
+
+        # ── Пользователи ──────────────────────────────────────────────
+        total_users = int(await scalar(
+            f"SELECT COUNT(*) FROM users WHERE 1=1 {excl_u};",
         ))
+        new_users = int(await scalar(
+            f"SELECT COUNT(*) FROM users WHERE 1=1 {tf_u} {excl_u};", p_u,
+        ))
+        # Пользователи, которые отправили хотя бы одно аудио за период
+        audio_users = int(await scalar(
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE type='recognize' {tf_e} {excl_e};", p_e,
+        ))
+        # Всего уникальных отправителей аудио за всё время (для воронки)
+        audio_users_total = int(await scalar(
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE type='recognize' {excl_e};",
+        ))
+        # Уникальные пользователи, упёршиеся в пэйвол за период
+        paywall_users = int(await scalar(
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE type='paywall' {tf_e} {excl_e};", p_e,
+        ))
+        # DAU / WAU / MAU (исключая админа)
         dau = int(await scalar(
-            "SELECT COUNT(DISTINCT user_id) FROM events WHERE created_at >= datetime('now','-1 day');"
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE created_at >= datetime('now','-1 day') {excl_e};"
         ))
         wau = int(await scalar(
-            "SELECT COUNT(DISTINCT user_id) FROM events WHERE created_at >= datetime('now','-7 days');"
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE created_at >= datetime('now','-7 days') {excl_e};"
         ))
         mau = int(await scalar(
-            "SELECT COUNT(DISTINCT user_id) FROM events WHERE created_at >= datetime('now','-30 days');"
-        ))
-        files = int(await scalar(
-            "SELECT COUNT(*) FROM events WHERE type='recognize' AND created_at >= datetime('now', ?);",
-            (period,),
-        ))
-        minutes = await scalar(
-            "SELECT COALESCE(SUM(duration_sec),0)/60.0 FROM events WHERE type='recognize' AND created_at >= datetime('now', ?);",
-            (period,),
-        )
-        avg_len = await scalar(
-            "SELECT COALESCE(AVG(duration_sec),0)/60.0 FROM events WHERE type='recognize' AND created_at >= datetime('now', ?);",
-            (period,),
-        )
-        paywall_hits = int(await scalar(
-            "SELECT COUNT(*) FROM events WHERE type='paywall' AND created_at >= datetime('now', ?);",
-            (period,),
-        ))
-        errors = int(await scalar(
-            "SELECT COUNT(*) FROM events WHERE type='error' AND created_at >= datetime('now', ?);",
-            (period,),
+            f"SELECT COUNT(DISTINCT user_id) FROM events "
+            f"WHERE created_at >= datetime('now','-30 days') {excl_e};"
         ))
 
-        # Разбивка по шаблонам
+        # ── Расшифровки ────────────────────────────────────────────────
+        files = int(await scalar(
+            f"SELECT COUNT(*) FROM events WHERE type='recognize' {tf_e} {excl_e};", p_e,
+        ))
+        minutes = await scalar(
+            f"SELECT COALESCE(SUM(duration_sec),0)/60.0 FROM events "
+            f"WHERE type='recognize' {tf_e} {excl_e};", p_e,
+        )
+        avg_len = await scalar(
+            f"SELECT COALESCE(AVG(duration_sec),0)/60.0 FROM events "
+            f"WHERE type='recognize' {tf_e} {excl_e};", p_e,
+        )
+        max_len = await scalar(
+            f"SELECT COALESCE(MAX(duration_sec),0)/60.0 FROM events "
+            f"WHERE type='recognize' {tf_e} {excl_e};", p_e,
+        )
+        # Когда была последняя расшифровка (любого пользователя)
         cur = await db.execute(
-            "SELECT COALESCE(template,'(без шаблона)') AS t, COUNT(*) AS c "
-            "FROM events WHERE type='template' AND created_at >= datetime('now', ?) "
-            "GROUP BY t ORDER BY c DESC;",
-            (period,),
+            f"SELECT created_at FROM events WHERE type='recognize' {excl_e} "
+            f"ORDER BY created_at DESC LIMIT 1;",
+        )
+        row = await cur.fetchone()
+        last_recognize_at: str | None = str(row[0]) if row else None
+
+        # ── Пэйвол / ошибки ───────────────────────────────────────────
+        paywall_hits = int(await scalar(
+            f"SELECT COUNT(*) FROM events WHERE type='paywall' {tf_e} {excl_e};", p_e,
+        ))
+        errors = int(await scalar(
+            f"SELECT COUNT(*) FROM events WHERE type='error' {tf_e} {excl_e};", p_e,
+        ))
+
+        # ── Шаблоны (топ-8) ───────────────────────────────────────────
+        cur = await db.execute(
+            f"SELECT COALESCE(template,'plain') AS t, COUNT(*) AS c "
+            f"FROM events WHERE type='template' {tf_e} {excl_e} "
+            f"GROUP BY t ORDER BY c DESC LIMIT 8;", p_e,
         )
         templates = {str(r["t"]): int(r["c"]) for r in await cur.fetchall()}
 
-        # Популярные форматы экспорта
+        # ── Экспорт ───────────────────────────────────────────────────
         cur = await db.execute(
-            "SELECT COALESCE(fmt,'?') AS f, COUNT(*) AS c "
-            "FROM events WHERE type='export' AND created_at >= datetime('now', ?) "
-            "GROUP BY f ORDER BY c DESC;",
-            (period,),
+            f"SELECT COALESCE(fmt,'?') AS f, COUNT(*) AS c "
+            f"FROM events WHERE type='export' {tf_e} {excl_e} "
+            f"GROUP BY f ORDER BY c DESC;", p_e,
         )
         formats = {str(r["f"]): int(r["c"]) for r in await cur.fetchall()}
+        exports_total = sum(formats.values())
 
+        # ── Whitelist ─────────────────────────────────────────────────
         whitelist_count = int(await scalar("SELECT COUNT(*) FROM whitelist;"))
 
         return {
             "period_days": days,
             "users_total": total_users,
             "users_new": new_users,
+            "users_audio": audio_users,          # отправили аудио за период
+            "users_audio_total": audio_users_total,  # за всё время
+            "users_paywall": paywall_users,       # упёрлись в лимит за период
             "dau": dau,
             "wau": wau,
             "mau": mau,
             "files": files,
             "minutes": round(minutes, 1),
             "avg_minutes": round(avg_len, 1),
+            "max_minutes": round(max_len, 1),
+            "last_recognize_at": last_recognize_at,
             "paywall_hits": paywall_hits,
             "errors": errors,
             "templates": templates,
             "formats": formats,
+            "exports_total": exports_total,
             "whitelist_count": whitelist_count,
-            "revenue": 0,            # оплата не подключена (информационный пэйвол)
-            "conversion": None,      # н.д.
         }
