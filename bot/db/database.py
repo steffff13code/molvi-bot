@@ -87,6 +87,7 @@ async def init_db() -> None:
         await _ensure_column(db, "users", "consent_at", "TIMESTAMP")
         await _ensure_column(db, "users", "minutes_used", "REAL NOT NULL DEFAULT 0")
         await _ensure_column(db, "users", "last_seen_at", "TIMESTAMP")
+        await _ensure_column(db, "users", "gifted_minutes", "REAL NOT NULL DEFAULT 0")
 
         await db.commit()
 

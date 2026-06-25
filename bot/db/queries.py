@@ -58,17 +58,40 @@ async def add_minutes(user_id: int, minutes: float) -> None:
 
 
 async def gift_minutes(user_id: int, minutes: float) -> bool:
-    """Подарить пользователю N минут — вычитает из minutes_used.
-
-    Возвращает True если пользователь найден, False если нет.
-    """
+    """Подарить пользователю N минут — вычитает из minutes_used и фиксирует в gifted_minutes."""
     async with get_db() as db:
         cur = await db.execute(
-            "UPDATE users SET minutes_used = COALESCE(minutes_used,0) - ? WHERE user_id=?;",
-            (minutes, user_id),
+            """UPDATE users
+               SET minutes_used   = COALESCE(minutes_used, 0)   - ?,
+                   gifted_minutes = COALESCE(gifted_minutes, 0) + ?
+               WHERE user_id=?;""",
+            (minutes, minutes, user_id),
         )
         await db.commit()
         return cur.rowcount > 0
+
+
+async def get_user_info(user_id: int) -> dict | None:
+    """Полная информация по пользователю для админа."""
+    async with get_db() as db:
+        cur = await db.execute(
+            """SELECT user_id, username, first_name, consent_at,
+                      minutes_used, gifted_minutes, created_at, last_seen_at
+               FROM users WHERE user_id=?;""",
+            (user_id,),
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        # Whitelist check
+        cur2 = await db.execute(
+            "SELECT id, note, added_at FROM whitelist WHERE tg_id=? LIMIT 1;",
+            (user_id,),
+        )
+        wl = await cur2.fetchone()
+        d["whitelist"] = dict(wl) if wl else None
+        return d
 
 
 # ───────────────────────── Whitelist (безлимит) ─────────────────────────

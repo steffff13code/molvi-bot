@@ -1,15 +1,4 @@
-"""Единый источник правды по ценам и лимитам.
-
-Значения берутся из настроек (env: FREE_MINUTES, PRICE_PER_HOUR) и
-используются ВО ВСЕХ сообщениях бота. Сайт — статика, поэтому его тексты
-правятся вручную под эти же значения (рантайм-синхрон для статики невозможен).
-
-Экономика (пометка для владельца):
-  50 ₽/час ≈ 0,83 ₽/мин — это НИЖЕ себестоимости распознавания на тарифе
-  Сбера для физлиц (≈ 1,2 ₽/мин = 72 ₽/час). Прибыльно только на тарифе
-  для юрлиц (≈ 0,6 ₽/мин = 36 ₽/час) или на собственном Whisper.
-  Сам провайдер сейчас не меняем (см. PROVIDER.md).
-"""
+"""Единый источник правды по ценам и лимитам."""
 
 from __future__ import annotations
 
@@ -28,23 +17,66 @@ _PACKAGES = [
 ]
 
 
-def tariffs_text(used_minutes: float = 0.0, whitelisted: bool = False) -> str:
+def _fmt_minutes(minutes: float) -> str:
+    """60 мин → '1 ч', 90 мин → '1 ч 30 мин', 45 мин → '45 мин'."""
+    m = int(round(minutes))
+    if m < 60:
+        return f"{m} мин"
+    h, rem = divmod(m, 60)
+    return f"{h} ч {rem} мин" if rem else f"{h} ч"
+
+
+def profile_block(
+    used_minutes: float,
+    gifted_minutes: float,
+    whitelisted: bool,
+) -> str:
+    """Блок «Ваш профиль» для сообщения тарифов."""
+    from bot.config import settings as s
+    free = s.free_minutes
+
+    remaining = max(0.0, free - used_minutes)
+    actual_used = max(0.0, used_minutes)       # реально потрачено пользователем
+
+    if whitelisted:
+        return (
+            "👤 <b>Ваш профиль</b>\n"
+            "⭐ Статус: <b>Безлимит</b> — лимиты не применяются"
+        )
+
+    if gifted_minutes > 0:
+        pkg = f"🎁 Подарочный пакет (+{_fmt_minutes(gifted_minutes)})"
+    else:
+        pkg = f"🎁 Бесплатный пакет ({_fmt_minutes(free)})"
+
+    lines = [
+        "👤 <b>Ваш профиль</b>",
+        f"📦 Пакет: {pkg}",
+        f"📊 Использовано: <b>{_fmt_minutes(actual_used)}</b>",
+        f"⏳ Осталось: <b>{_fmt_minutes(remaining)}</b>",
+    ]
+    if remaining == 0:
+        lines.append("🚫 <i>Лимит исчерпан — купите пакет ниже</i>")
+    return "\n".join(lines)
+
+
+def tariffs_text(
+    used_minutes: float = 0.0,
+    gifted_minutes: float = 0.0,
+    whitelisted: bool = False,
+) -> str:
     lines = [
         "💳 <b>Тарифы МОЛВИ</b>\n",
-        f"🎁 <b>{FREE_MINUTES} минут — бесплатно</b>, прямо сейчас и без карты.",
+        profile_block(used_minutes, gifted_minutes, whitelisted),
+        "",
+        "<b>Платные пакеты:</b>",
     ]
-    if whitelisted:
-        lines.append("⭐ <b>Ваш статус: безлимит</b> — лимиты не применяются.\n")
-    else:
-        remaining = max(0.0, FREE_MINUTES - used_minutes)
-        lines.append(f"📊 Осталось: <b>{remaining:.0f} из {FREE_MINUTES} бесплатных минут</b>\n")
-    lines.append("<b>Платные пакеты:</b>")
     for hours, price, per_h in _PACKAGES:
         note = f"  <i>({per_h} ₽/ч)</i>" if per_h else ""
         lines.append(f"• {hours} ч — <b>{price} ₽</b>{note}")
     lines += [
         "",
-        "⚡ Час записи расшифровывается за ~5 минут — вместо 6 часов вручную.",
+        "⚡ Час записи расшифровывается за ~5 минут.",
         "\nЧтобы купить пакет — выберите ниже или напишите нам.",
     ]
     return "\n".join(lines)

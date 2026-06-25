@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats, get_stats_full, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
+from bot.db.queries import get_minutes_used, get_stats, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
 from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
 from bot.keyboards.reply import (
     BTN_DEVICE,
@@ -150,13 +150,16 @@ async def templates_info(message: types.Message) -> None:
 async def tariffs(message: types.Message) -> None:
     user = message.from_user
     used = 0.0
+    gifted = 0.0
     wl = False
     if user:
         wl = await is_whitelisted(user.id, user.username)
-        if not wl:
-            used = await get_minutes_used(user.id)
+        info = await get_user_info(user.id)
+        if info:
+            used = float(info.get("minutes_used") or 0)
+            gifted = float(info.get("gifted_minutes") or 0)
     sent = await message.answer(
-        tariffs_text(used_minutes=used, whitelisted=wl),
+        tariffs_text(used_minutes=used, gifted_minutes=gifted, whitelisted=wl),
         reply_markup=tariffs_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,
@@ -442,3 +445,55 @@ async def cmd_wl_remove(message: types.Message) -> None:
         await message.answer(f"✅ Запись #{parts[1]} удалена из whitelist.")
     else:
         await message.answer(f"⚠️ Запись #{parts[1]} не найдена.")
+
+
+@router.message(Command("userinfo"))
+async def cmd_user_info(message: types.Message) -> None:
+    """Проверить пакет и статус пользователя. Использование: /userinfo <tg_id>"""
+    if not _admin_only(message.from_user):
+        return
+    parts = (message.text or "").split()
+    if len(parts) != 2 or not parts[1].lstrip("-").isdigit():
+        await message.answer("Использование: /userinfo <tg_id>\nПример: /userinfo 1977145797")
+        return
+
+    from bot.services.pricing import FREE_MINUTES, _fmt_minutes
+    tg_id = int(parts[1])
+    info = await get_user_info(tg_id)
+    if not info:
+        await message.answer(
+            f"❌ Пользователь <code>{tg_id}</code> не найден в базе.\n"
+            "Он должен хотя бы раз запустить бота.",
+            parse_mode="HTML",
+        )
+        return
+
+    used = float(info.get("minutes_used") or 0)
+    gifted = float(info.get("gifted_minutes") or 0)
+    remaining = max(0.0, FREE_MINUTES - used)
+    wl = info.get("whitelist")
+    name = info.get("first_name") or "—"
+    uname = f"@{info['username']}" if info.get("username") else "нет"
+
+    if wl:
+        status = f"⭐ Безлимит (whitelist #{wl['id']})"
+        if wl.get("note"):
+            status += f" — {wl['note']}"
+    elif gifted > 0:
+        status = f"🎁 Подарочный пакет (+{_fmt_minutes(gifted)})"
+    else:
+        status = "🎁 Бесплатный пакет"
+
+    lines = [
+        f"👤 <b>Пользователь {tg_id}</b>",
+        f"Имя: {name}  |  Username: {uname}",
+        f"Зарегистрирован: {(info.get('created_at') or '')[:16]}",
+        f"Последняя активность: {(info.get('last_seen_at') or '')[:16]}",
+        "",
+        f"📦 <b>Пакет:</b> {status}",
+        f"📊 Подарено всего: <b>{_fmt_minutes(gifted)}</b>",
+        f"📉 Использовано (minutes_used): <b>{used:.1f}</b>",
+        f"⏳ Осталось: <b>{_fmt_minutes(remaining)}</b>",
+        f"✅ Согласие: {'да' if info.get('consent_at') else 'нет'}",
+    ]
+    await message.answer("\n".join(lines), parse_mode="HTML")

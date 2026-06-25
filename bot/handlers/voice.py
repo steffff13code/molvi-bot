@@ -274,7 +274,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     if not whitelisted:
         used_now = await get_minutes_used(user.id)
         remaining = max(0.0, FREE_MINUTES - used_now)
-        balance_line = f"\n\n📊 Остаток бесплатных минут: <b>{remaining:.0f} из {FREE_MINUTES}</b>"
+        balance_line = f"\n\n📊 Остаток минут: <b>{remaining:.0f}</b>"
 
     await status_msg.edit_text(
         f"✅ Готово! Что сделать с записью?{balance_line}",
