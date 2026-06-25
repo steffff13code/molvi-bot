@@ -8,6 +8,7 @@ from bot.db.queries import get_stats, has_consent, set_consent, upsert_user
 from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
 from bot.keyboards.reply import (
     BTN_DEVICE,
+    BTN_HOME,
     BTN_TARIFFS,
     BTN_TEMPLATES,
     BTN_TRANSCRIBE,
@@ -28,7 +29,7 @@ WELCOME_TEXT = """Привет, {name}! 👋
 📋 <b>Сделаю саммари</b> — на выбор 8 готовых шаблонов (протокол встречи, конспект лекции, интервью и др.)
 📄 <b>Отдам файлом</b> — TXT, PDF или DOCX
 
-⚡ Час записи — ~3 минуты расшифровки. Первые {free} минут — <b>бесплатно</b>.
+⚡ Час записи — ~5 минут расшифровки. Первые {free} минут — <b>бесплатно</b>.
 
 🔒 Мы не храним ваши файлы и расшифровки — они остаются только у вас.
 
@@ -151,14 +152,16 @@ async def buy_stub(cb: types.CallbackQuery) -> None:
         await cb.message.answer(
             "💳 Онлайн-оплата скоро будет доступна.\n\n"
             "Чтобы купить минуты уже сейчас — напишите нам, и мы откроем доступ. "
-            "А первые 30 минут доступны бесплатно прямо в боте.",
+            "А первые 60 минут доступны бесплатно прямо в боте.",
         )
 
 
-@router.message(F.text == BTN_DEVICE)
-async def buy_device(message: types.Message) -> None:
+@router.message(F.text == BTN_HOME)
+async def home_handler(message: types.Message) -> None:
     await message.answer(
-        DEVICE_TEXT,
+        f"🏠 <b>Главный сайт МОЛВИ</b>\n\n"
+        f"AI-расшифровка аудио и умный диктофон — всё на одном сайте.\n\n"
+        f"🌐 <a href=\"{settings.site_url}\">{settings.site_url}</a>",
         reply_markup=device_kb(),
         parse_mode="HTML",
         disable_web_page_preview=True,

@@ -88,9 +88,22 @@ def tariffs_kb() -> InlineKeyboardMarkup:
     )
 
 
+def paywall_kb() -> InlineKeyboardMarkup:
+    """Кнопки при исчерпании лимита."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="💳 Купить тариф", callback_data="buy:tariffs")],
+            [
+                InlineKeyboardButton(text="🏠 Главная", url=settings.site_url),
+                InlineKeyboardButton(text="🎙 Расшифровать", callback_data="go:transcribe"),
+            ],
+        ]
+    )
+
+
 def device_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🛒 Открыть molvi-ai.ru", url=settings.site_url)],
+            [InlineKeyboardButton(text="🌐 molvi-ai.ru", url=settings.site_url)],
         ]
     )

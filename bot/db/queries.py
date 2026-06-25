@@ -66,6 +66,9 @@ def _norm_username(username: str | None) -> str | None:
 
 
 async def is_whitelisted(user_id: int, username: str | None) -> bool:
+    from bot.config import settings  # локальный импорт во избежание цикличности
+    if settings.admin_id and user_id == settings.admin_id:
+        return True
     uname = _norm_username(username)
     async with get_db() as db:
         cur = await db.execute(

@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     max_duration_sec: int = 1800
 
     # Тарифы / лимиты (единый источник правды, см. services/pricing.py)
-    free_minutes: int = 30          # бесплатный лимит расшифровки, минут
+    free_minutes: int = 60          # бесплатный лимит расшифровки, минут
     price_per_hour: int = 50        # ₽/час (≈ 0,83 ₽/мин)
 
     # Админ / API

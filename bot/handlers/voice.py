@@ -16,7 +16,7 @@ from bot.db.queries import (
     log_event,
     upsert_user,
 )
-from bot.keyboards.inline import choose_mode_kb, consent_kb, result_kb, templates_kb
+from bot.keyboards.inline import choose_mode_kb, consent_kb, paywall_kb, result_kb, templates_kb
 from bot.keyboards.reply import main_menu_kb
 from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
 from bot.services.audio import AUDIO_DIR, ensure_dirs
@@ -140,7 +140,12 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         used = await get_minutes_used(user.id)
         if used >= FREE_MINUTES:
             await log_event(user_id=user.id, type_="paywall")
-            await message.answer(paywall_text(), parse_mode="HTML", disable_web_page_preview=True)
+            await message.answer(
+                paywall_text(),
+                parse_mode="HTML",
+                disable_web_page_preview=True,
+                reply_markup=paywall_kb(),
+            )
             return
 
     dur_text = f" ({duration_sec} сек)" if duration_sec else ""
@@ -189,8 +194,16 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     # Транскрипт держим только в RAM на время сессии (для смены шаблона).
     token = session_store.put(user.id, transcript, duration_sec)
 
+    # Показываем остаток лимита для обычных пользователей.
+    balance_line = ""
+    if not whitelisted:
+        used_now = await get_minutes_used(user.id)
+        remaining = max(0.0, FREE_MINUTES - used_now)
+        balance_line = f"\n\n📊 Остаток бесплатных минут: <b>{remaining:.0f} из {FREE_MINUTES}</b>"
+
     await status_msg.edit_text(
-        "✅ Готово! Что сделать с записью?",
+        f"✅ Готово! Что сделать с записью?{balance_line}",
+        parse_mode="HTML",
         reply_markup=choose_mode_kb(token),
     )
 
