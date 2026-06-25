@@ -5,11 +5,55 @@ import re
 from aiogram.types import BufferedInputFile
 
 
+# Маркеры начала строк, которые НЕ являются заголовками (пункты списков).
+_BULLET_PREFIXES = ("—", "–", "•", "-", "*", "☐", "□", "▪", ">", "&gt;")
+
+# Метки-поля вида «Цель: …», «Тема: …» — выделяем жирным только саму метку.
+_FIELD_LABEL_RE = re.compile(r"^([A-Za-zА-Яа-яЁё][^:<>\n]{1,40}):(\s+\S)")
+
+
+def _style_line_headers(text: str) -> str:
+    """Выделяет жирным строки-заголовки и метки-поля (для промптов без markdown).
+
+    Заголовок — короткая строка без двоеточия и без маркера списка
+    («О чём запись», «Ход разговора», «Главные мысли / тезисы»).
+    Метка-поле — «Цель: текст» → «<b>Цель:</b> текст».
+    """
+    out: list[str] = []
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if not stripped or "<b>" in line:
+            out.append(line)
+            continue
+        # Пункт списка / нумерованный — не трогаем
+        if stripped[0].isdigit() or stripped.startswith(_BULLET_PREFIXES):
+            out.append(line)
+            continue
+        # Метка-поле «Цель: …» → жирная метка
+        m = _FIELD_LABEL_RE.match(stripped)
+        if m:
+            label = m.group(1)
+            rest = stripped[len(label) + 1:]
+            out.append(f"<b>{label}:</b>{rest}")
+            continue
+        # Короткая строка без двоеточия и без конечной пунктуации = заголовок секции.
+        # Предложения-проза заканчиваются на . ! ? , ; — их не трогаем.
+        if (
+            ":" not in stripped
+            and len(stripped) <= 60
+            and stripped[-1] not in ".!?,;"
+        ):
+            out.append(f"<b>{stripped}</b>")
+            continue
+        out.append(line)
+    return "\n".join(out)
+
+
 def md_to_html(text: str) -> str:
     """Конвертирует Markdown GigaChat в HTML для Telegram (parse_mode=HTML).
 
-    Экранирует HTML-спецсимволы, затем конвертирует **жирный**, *текст*,
-    # Заголовки, маркеры списков в соответствующие HTML-теги/символы.
+    Экранирует HTML-спецсимволы, конвертирует **жирный**, ## заголовки,
+    маркеры списков, а также выделяет жирным строки-заголовки v2-промптов.
     """
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     # **жирный** → <b>жирный</b>  (раньше, чтобы не задеть одиночные *)
@@ -20,6 +64,8 @@ def md_to_html(text: str) -> str:
     text = re.sub(r"^[*\-]\s+", "• ", text, flags=re.MULTILINE)
     # Оставшиеся *одиночные* → убираем звёздочки
     text = re.sub(r"\*(.+?)\*", r"\1", text, flags=re.DOTALL)
+    # Жирные заголовки секций и метки-поля
+    text = _style_line_headers(text)
     return text
 
 
