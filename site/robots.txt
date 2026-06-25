@@ -10,3 +10,4 @@ Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term
 
 Sitemap: https://molvi-ai.ru/sitemap.xml
 Host: https://molvi-ai.ru
+# updated: 2026-06-25

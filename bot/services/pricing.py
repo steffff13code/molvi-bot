@@ -16,7 +16,7 @@ from __future__ import annotations
 from bot.config import settings
 
 FREE_MINUTES: int = settings.free_minutes
-PRICE_PER_HOUR: int = 75  # минимальная цена (пакет 1 ч)
+PRICE_PER_HOUR: int = 50  # минимальная цена за час (пакет 50 ч)
 
 # Пакеты: (часов, цена ₽, ₽/час или None)
 _PACKAGES = [
