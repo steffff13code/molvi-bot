@@ -21,7 +21,10 @@ class GigaChatLLM:
         )
 
     async def summarize(self, *, text: str, system: str) -> str:
-        return await self._client.complete(system=system, user=text)
+        # v3: точность важнее креатива (temp 0.2); подробное summary требует запаса токенов.
+        return await self._client.complete(
+            system=system, user=text, temperature=0.2, max_tokens=3500
+        )
 
 
 def get_llm() -> LLMProvider:
