@@ -17,7 +17,7 @@ class GigaChatError(RuntimeError):
 class GigaChatClient:
     auth_key: str
     scope: str = "GIGACHAT_API_PERS"
-    model: str = "GigaChat"
+    model: str = "GigaChat-2-Pro"
     _token: AccessToken | None = None
 
     async def _get_token(self) -> str:

@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # GigaChat
     gigachat_auth_key: str
     gigachat_scope: str = "GIGACHAT_API_PERS"
-    gigachat_model: str = "GigaChat"
+    gigachat_model: str = "GigaChat-2-Pro"
 
     # Провайдеры (swap-ready, см. PROVIDER.md).
     stt_provider: str = "nexara"        # nexara | salute
