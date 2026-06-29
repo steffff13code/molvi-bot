@@ -227,7 +227,23 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     try:
         tg_file = await bot.get_file(tg_file_id)  # type: ignore[arg-type]
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
+    except Exception as e:
+        logger.error("File download failed: {e}", e=e)
+        err_text = str(e).lower()
+        if "file is too big" in err_text or "too big" in err_text or "file_too_big" in err_text:
+            await status_msg.edit_text(
+                f"⚠️ Файл слишком большой для загрузки через Telegram.\n\n"
+                f"Максимальный размер — <b>{settings.max_audio_mb} МБ</b>. "
+                f"Сожмите файл или пришлите часть записи.",
+                parse_mode="HTML",
+            )
+        else:
+            await status_msg.edit_text(
+                "⚠️ Не удалось загрузить файл от Telegram. Попробуйте ещё раз через минуту."
+            )
+        return
 
+    try:
         stt_path = source_path
         actual_duration_sec = duration_sec
         if trim_needed and remaining_sec:
