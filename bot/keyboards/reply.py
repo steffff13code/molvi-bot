@@ -15,10 +15,8 @@ BTN_DEVICE = BTN_HOME  # обратная совместимость
 def main_menu_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=BTN_HOME)],
-            [KeyboardButton(text=BTN_TRANSCRIBE)],
-            [KeyboardButton(text=BTN_TEMPLATES), KeyboardButton(text=BTN_TARIFFS)],
-            [KeyboardButton(text=BTN_HELP), KeyboardButton(text=BTN_MY_RECORDS)],
+            [KeyboardButton(text=BTN_TRANSCRIBE), KeyboardButton(text=BTN_HOME)],
+            [KeyboardButton(text=BTN_TARIFFS), KeyboardButton(text=BTN_MY_RECORDS)],
         ],
         resize_keyboard=True,
         is_persistent=True,
