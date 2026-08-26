@@ -30,8 +30,8 @@ class Settings(BaseSettings):
     # Telegram
     telegram_bot_token: str
 
-    # SaluteSpeech
-    salutespeech_auth_key: str
+    # SaluteSpeech (опциональный резервный STT — нужен только при STT_PROVIDER=salute)
+    salutespeech_auth_key: str = ""
     salutespeech_scope: str = "SALUTE_SPEECH_PERS"
 
     # GigaChat
@@ -89,5 +89,6 @@ try:
 except Exception as e:  # pragma: no cover
     raise RuntimeError(
         "Не найден или не заполнен файл .env / переменные окружения. "
-        "Заполните ключи (TELEGRAM_BOT_TOKEN, SALUTESPEECH_AUTH_KEY, GIGACHAT_AUTH_KEY)."
+        "Заполните ключи (TELEGRAM_BOT_TOKEN, GIGACHAT_AUTH_KEY; "
+        "SALUTESPEECH_AUTH_KEY нужен только при STT_PROVIDER=salute)."
     ) from e

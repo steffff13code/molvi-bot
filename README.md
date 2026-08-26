@@ -45,7 +45,7 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-Заполните `TELEGRAM_BOT_TOKEN`, `SALUTESPEECH_AUTH_KEY`, `GIGACHAT_AUTH_KEY`.
+Заполните `TELEGRAM_BOT_TOKEN`, `GIGACHAT_AUTH_KEY`, `NEXARA_API_KEY` (для STT по умолчанию). `SALUTESPEECH_AUTH_KEY` нужен только если `STT_PROVIDER=salute`.
 
 3) Запуск:
 
