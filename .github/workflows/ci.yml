@@ -91,5 +91,24 @@ jobs:
     name: CI OK
     runs-on: ubuntu-latest
     needs: [lint, types, test, import-smoke, audit]
+    # ВАЖНО: если убрать if: always(), по умолчанию GitHub Actions пропускает (skipped)
+    # эту джобу целиком при падении любой из needs — а пропущенный required-чек
+    # branch protection засчитывает как пройденный. Из-за этого красный lint/test
+    # молча проходил бы в merge. always() гарантирует, что джоба всегда выполнится и
+    # явно провалится, если что-то из блокирующих не success.
+    if: always()
     steps:
-      - run: echo "CI OK"
+      - name: Проверить обязательные джобы (types/audit — информационные, не блокируют)
+        run: |
+          echo "lint:         ${{ needs.lint.result }}"
+          echo "types:        ${{ needs.types.result }}  (continue-on-error — не блокирует)"
+          echo "test:         ${{ needs.test.result }}"
+          echo "import-smoke: ${{ needs['import-smoke'].result }}"
+          echo "audit:        ${{ needs.audit.result }}  (continue-on-error — не блокирует)"
+
+          fail=0
+          [ "${{ needs.lint.result }}" = "success" ] || { echo "::error::lint: ${{ needs.lint.result }}"; fail=1; }
+          [ "${{ needs.test.result }}" = "success" ] || { echo "::error::test: ${{ needs.test.result }}"; fail=1; }
+          [ "${{ needs['import-smoke'].result }}" = "success" ] || { echo "::error::import-smoke: ${{ needs['import-smoke'].result }}"; fail=1; }
+
+          exit "$fail"
