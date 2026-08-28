@@ -168,10 +168,18 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         file_size = message.document.file_size
         file_name = message.document.file_name
 
-    max_bytes = settings.max_audio_mb * 1024 * 1024
+    max_bytes = settings.effective_max_mb * 1024 * 1024
     if file_size is not None and file_size > max_bytes:
+        # err_code появится в events, когда PR-5 добавит эту колонку
+        await log_event(user_id=user.id, type_="error")
         await message.answer(
-            f"⚠️ Файл слишком большой. Максимальный размер — {settings.max_audio_mb} МБ.",
+            f"⚠️ Файл {file_size / 1048576:.0f} МБ — это больше, чем Telegram отдаёт ботам.\n\n"
+            f"Предел — <b>{settings.effective_max_mb} МБ</b>, и он задан самим Telegram, "
+            f"а не нами. Что можно сделать:\n"
+            f"— записать голосовым прямо в чат (час речи ≈ 9 МБ);\n"
+            f"— пересжать в MP3 64 kbps моно (час ≈ 28 МБ, полтора часа не влезет);\n"
+            f"— прислать запись частями.",
+            parse_mode="HTML",
             reply_markup=main_menu_kb(),
         )
         return
@@ -228,11 +236,13 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
     except Exception as e:
         logger.error("File download failed: {e}", e=e)
+        # err_code появится в events, когда PR-5 добавит эту колонку
+        await log_event(user_id=user.id, type_="error")
         err_text = str(e).lower()
         if "file is too big" in err_text or "too big" in err_text or "file_too_big" in err_text:
             await status_msg.edit_text(
                 f"⚠️ Файл слишком большой для загрузки через Telegram.\n\n"
-                f"Максимальный размер — <b>{settings.max_audio_mb} МБ</b>. "
+                f"Максимальный размер — <b>{settings.effective_max_mb} МБ</b>. "
                 f"Сожмите файл или пришлите часть записи.",
                 parse_mode="HTML",
             )
@@ -289,7 +299,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     if not whitelisted:
         used_now = await get_minutes_used(user.id)
         remaining = max(0.0, FREE_MINUTES - used_now)
-        balance_line = f"\n\n📊 Остаток минут: <b>{remaining:.0f}</b>"
+        balance_line = f"\n\n📊 Остаток минут: <b>{remaining:.1f}</b>"
 
     await status_msg.edit_text(
         f"✅ Готово! Что сделать с записью?{balance_line}",

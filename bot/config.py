@@ -9,6 +9,10 @@ BASE_DIR = Path(__file__).parent.parent  # molvi-bot/
 
 _env_file = BASE_DIR / ".env"
 
+# Bot API отдаёт боту файлы не более 20 МБ (core.telegram.org/bots/faq). Значение из env
+# может только уменьшать эффективный лимит, никогда не увеличивать его.
+TELEGRAM_DOWNLOAD_LIMIT_MB = 20
+
 
 def _default_db_path() -> str:
     """БД по умолчанию рядом с проектом.
@@ -72,6 +76,12 @@ class Settings(BaseSettings):
     site_url: str = "https://molvi-ai.ru/"
     landing_url: str = "https://molvi-ai.ru/transcribe/"
     bot_url: str = "https://t.me/molviai_bot"
+
+    @property
+    def effective_max_mb(self) -> int:
+        """Реальный лимит файла: env может только УМЕНЬШИТЬ 20 МБ, не увеличить —
+        Telegram Bot API (getFile) не отдаёт боту файлы больше этого порога."""
+        return min(self.max_audio_mb, TELEGRAM_DOWNLOAD_LIMIT_MB)
 
     def model_post_init(self, __context: object) -> None:
         # DB_PATH из окружения имеет приоритет; иначе — путь по умолчанию.
