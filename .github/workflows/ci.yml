@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check bot/ tests/ scripts/
+
+  types:
+    runs-on: ubuntu-latest
+    # ~26 ошибок сейчас в 6 файлах (bot/handlers/voice.py, union-attr) — backlog
+    # B7, сделать блокирующей позже. Не часть этого PR.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: mypy --ignore-missing-imports bot/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q --cov=bot --cov-report=term-missing
+
+  import-smoke:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: "x"
+      GIGACHAT_AUTH_KEY: "x"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -c "import bot.main, bot.handlers.voice, bot.api.server"
+
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pip-audit -r requirements.txt
+
+  ci-ok:
+    name: CI OK
+    runs-on: ubuntu-latest
+    needs: [lint, types, test, import-smoke, audit]
+    steps:
+      - run: echo "CI OK"

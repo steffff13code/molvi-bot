@@ -15,7 +15,7 @@ import httpx
 from loguru import logger
 
 from bot.config import settings
-from bot.services.salute_speech import SaluteSpeechClient, SaluteSpeechError, SaluteSpeechQuotaError
+from bot.services.salute_speech import SaluteSpeechClient, SaluteSpeechError
 
 
 class STTQuotaError(SaluteSpeechError):

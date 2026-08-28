@@ -24,7 +24,6 @@ from bot.keyboards.inline import (
     consent_kb,
     paywall_kb,
     plain_result_kb,
-    result_kb,
     templates_kb,
 )
 from bot.keyboards.reply import main_menu_kb

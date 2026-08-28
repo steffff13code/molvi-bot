@@ -19,7 +19,7 @@ import aiosqlite
 # указывает на scripts/, а не на корень, где лежит пакет bot.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bot.config import settings  # noqa: E402
+from bot.config import settings  # noqa: E402  (нужен sys.path.insert выше)
 from bot.db.database import get_db  # noqa: E402
 
 

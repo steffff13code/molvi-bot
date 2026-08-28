@@ -4,12 +4,10 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
-from bot.keyboards.inline import consent_kb, device_kb, tariffs_kb, website_kb
+from bot.db.queries import get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
+from bot.keyboards.inline import consent_kb, tariffs_kb
 from bot.keyboards.reply import (
-    BTN_DEVICE,
     BTN_HOME,
-    BTN_MY_RECORDS,
     BTN_TARIFFS,
     BTN_TEMPLATES,
     BTN_TRANSCRIBE,
@@ -269,9 +267,6 @@ def _build_stats_text(s: dict) -> str:
     audio_total = s["users_audio_total"]
     pw_users = s["users_paywall"]
 
-    # Воронка: база — все пользователи за период (или всего)
-    funnel_base = total if s["period_days"] == 0 else new if new > 0 else total
-
     lines = [
         f"📊 <b>Статистика МОЛВИ — {period_label}</b>",
         "<i>(ваш аккаунт исключён из всех счётчиков)</i>",
@@ -393,7 +388,6 @@ async def cmd_give_hours(message: types.Message) -> None:
     ok = await gift_minutes(tg_id, minutes)
     if ok:
         remaining = max(0.0, await get_minutes_used(tg_id))
-        effective_free = settings.free_minutes + minutes  # сколько всего получит
         await message.answer(
             f"✅ Пользователю <code>{tg_id}</code> подарено <b>{hours} ч ({int(minutes)} мин)</b>.\n"
             f"Теперь у него доступно ещё ~<b>{int(max(0, -remaining + minutes))} мин</b> "
@@ -428,7 +422,7 @@ async def cmd_wl_add(message: types.Message) -> None:
         un = f" (@{username})" if username else ""
         await message.answer(f"✅ <code>{tg_id}</code>{un} добавлен в whitelist — безлимит включён.", parse_mode="HTML")
     else:
-        await message.answer(f"⚠️ Не удалось добавить (возможно, уже есть в whitelist).")
+        await message.answer("⚠️ Не удалось добавить (возможно, уже есть в whitelist).")
 
 
 @router.message(Command("wlrm"))

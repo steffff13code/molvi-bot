@@ -18,8 +18,13 @@ def _ensure_parent_dir(path: str) -> None:
 @asynccontextmanager
 async def get_db() -> AsyncIterator[aiosqlite.Connection]:
     _ensure_parent_dir(settings.db_path)
-    async with aiosqlite.connect(settings.db_path) as db:
+    async with aiosqlite.connect(settings.db_path, timeout=30) as db:
+        await db.execute("PRAGMA journal_mode = WAL;")     # параллельное чтение при записи
+        await db.execute("PRAGMA busy_timeout = 5000;")    # ждать блокировку, а не падать
         await db.execute("PRAGMA foreign_keys = ON;")
+        # synchronous=NORMAL безопасен для метаданных; когда через эту БД пойдут
+        # реальные платежи — переключить на FULL (отдельный будущий шаг).
+        await db.execute("PRAGMA synchronous = NORMAL;")
         db.row_factory = aiosqlite.Row
         yield db
 

@@ -1,0 +1,35 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# scripts/ содержит ручные CLI-скрипты (не pytest-тесты); без этого pytest по
+# умолчанию пытается собрать *_test.py где угодно в репозитории и падает на
+# импортах скриптов, которые никто не запускает как тесты.
+testpaths = ["tests"]
+markers = [
+    "eval: медленные/дорогие сценарии с реальными LLM-вызовами (не гоняются в обычном CI)",
+    "smoke: минимальный дымовой прогон критичного пути",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+# Классический набор pyflakes + базовый pycodestyle. Явно фиксируем его, а не
+# полагаемся на дефолт ruff: в новых версиях (0.16+) "дефолт без select" уже
+# включает bandit/pyupgrade/isort/bugbear и другие пакеты правил, из-за чего
+# голая проверка внезапно тянет полсотни находок по всему репозиторию, никак
+# не связанных с целью этого PR (CI, которая не мешает выпускать код).
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# os.environ.setdefault должен отработать ДО импорта bot.config-зависимых
+# модулей, чтобы тесты не цепляли реальный .env — поэтому импорты здесь
+# намеренно не в начале файла.
+"tests/test_security.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+# --strict сюда НЕ включаем: pydub и python-docx не поставляют py.typed,
+# strict-режим даст шум без пользы. types-джоба в CI — continue-on-error
+# (см. backlog B7 — сделать блокирующей позже).

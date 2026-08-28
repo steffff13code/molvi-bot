@@ -95,8 +95,13 @@ def test_max_duration_sec_positive() -> None:
 
 
 def test_file_size_limit_bytes() -> None:
-    max_bytes = settings.max_audio_mb * 1024 * 1024
-    assert max_bytes >= 20 * 1024 * 1024  # минимум 20 МБ
+    # 20 МБ — ПОТОЛОК Telegram Bot API (getFile), а не пол.
+    assert settings.max_audio_mb <= 20
+
+
+def test_max_duration_is_sane() -> None:
+    # пока обрезка идёт через pydub, длинная запись = пик 4 ГБ RSS
+    assert settings.max_duration_sec <= 1800
 
 
 # ──────────────────────────────────────────────────────────────────────
