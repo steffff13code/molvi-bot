@@ -26,7 +26,6 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt
       - run: ruff check bot/ tests/ scripts/
-      - run: exit 1  # ВРЕМЕННО: искусственный провал для проверки ci-ok gate, не мёржить
 
   types:
     runs-on: ubuntu-latest
