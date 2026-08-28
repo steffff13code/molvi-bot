@@ -30,11 +30,12 @@ jobs:
   types:
     runs-on: ubuntu-latest
     # Baseline-гейт, не полный запрет: 26 ошибок на момент PR-1 (bot/handlers/voice.py,
-    # union-attr) — не цель, а зафиксированный потолок регресса. continue-on-error на
-    # уровне джобы сохраняет её не блокирующей merge (см. ci-ok ниже), но сам шаг падает,
-    # если ошибок стало больше 26 — джоба будет красной, а не молча зелёной, если кто-то
-    # добавит новых. Сделать полностью блокирующей — backlog B7.
-    continue-on-error: true
+    # union-attr) — не цель, а зафиксированный потолок регресса. Джоба падает, только если
+    # ошибок стало БОЛЬШЕ 26 — то есть на реальном регрессе, а не на уже известном долге.
+    # continue-on-error намеренно НЕ ставим: раз джоба зелёная на известном долге и красная
+    # только на регрессе, её можно (и нужно) сделать блокирующей — см. ci-ok ниже, где
+    # needs.types.result включён в обязательные. Закрыть весь долг (сделать mypy строгим
+    # с нуля) — отдельная задача, backlog B7.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -98,16 +99,17 @@ jobs:
     # явно провалится, если что-то из блокирующих не success.
     if: always()
     steps:
-      - name: Проверить обязательные джобы (types/audit — информационные, не блокируют)
+      - name: Проверить обязательные джобы (audit — информационная, не блокирует)
         run: |
           echo "lint:         ${{ needs.lint.result }}"
-          echo "types:        ${{ needs.types.result }}  (continue-on-error — не блокирует)"
+          echo "types:        ${{ needs.types.result }}  (baseline-гейт, блокирует на регрессе)"
           echo "test:         ${{ needs.test.result }}"
           echo "import-smoke: ${{ needs['import-smoke'].result }}"
           echo "audit:        ${{ needs.audit.result }}  (continue-on-error — не блокирует)"
 
           fail=0
           [ "${{ needs.lint.result }}" = "success" ] || { echo "::error::lint: ${{ needs.lint.result }}"; fail=1; }
+          [ "${{ needs.types.result }}" = "success" ] || { echo "::error::types: ${{ needs.types.result }}"; fail=1; }
           [ "${{ needs.test.result }}" = "success" ] || { echo "::error::test: ${{ needs.test.result }}"; fail=1; }
           [ "${{ needs['import-smoke'].result }}" = "success" ] || { echo "::error::import-smoke: ${{ needs['import-smoke'].result }}"; fail=1; }
 
