@@ -29,8 +29,11 @@ jobs:
 
   types:
     runs-on: ubuntu-latest
-    # ~26 ошибок сейчас в 6 файлах (bot/handlers/voice.py, union-attr) — backlog
-    # B7, сделать блокирующей позже. Не часть этого PR.
+    # Baseline-гейт, не полный запрет: 26 ошибок на момент PR-1 (bot/handlers/voice.py,
+    # union-attr) — не цель, а зафиксированный потолок регресса. continue-on-error на
+    # уровне джобы сохраняет её не блокирующей merge (см. ci-ok ниже), но сам шаг падает,
+    # если ошибок стало больше 26 — джоба будет красной, а не молча зелёной, если кто-то
+    # добавит новых. Сделать полностью блокирующей — backlog B7.
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +41,17 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt
-      - run: mypy --ignore-missing-imports bot/
+      - name: mypy (baseline — не блокирует merge, не даёт расти)
+        run: |
+          set +e
+          output=$(mypy --ignore-missing-imports bot/ 2>&1)
+          echo "$output"
+          count=$(echo "$output" | grep -c ": error:")
+          echo "mypy errors: $count (baseline: 26)"
+          if [ "$count" -gt 26 ]; then
+            echo "::error::Число ошибок mypy выросло: $count > 26 (базовая линия PR-1)"
+            exit 1
+          fi
 
   test:
     runs-on: ubuntu-latest
