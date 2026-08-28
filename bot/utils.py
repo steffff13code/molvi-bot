@@ -99,3 +99,6 @@ def split_telegram_text(text: str, limit: int = 4096) -> list[str]:
 def as_txt_file(filename: str, text: str) -> BufferedInputFile:
     data = text.encode("utf-8")
     return BufferedInputFile(data, filename=filename)
+
+
+_ci_ok_gate_test: int = "not-an-int"  # ВРЕМЕННО: тест baseline-гейта mypy (27 ошибок), не мёржить
