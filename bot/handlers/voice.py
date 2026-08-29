@@ -184,9 +184,10 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
         return
 
-    if duration_sec is not None and duration_sec > settings.max_duration_sec:
+    if duration_sec is not None and duration_sec > settings.effective_max_duration_sec:
+        await log_event(user_id=user.id, type_="error")
         await message.answer(
-            f"Запись слишком длинная. Лимит {settings.max_duration_sec // 60} мин.",
+            f"Запись слишком длинная. Лимит {settings.effective_max_duration_sec // 60} мин.",
             reply_markup=main_menu_kb(),
         )
         return

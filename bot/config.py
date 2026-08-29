@@ -13,6 +13,12 @@ _env_file = BASE_DIR / ".env"
 # может только уменьшать эффективный лимит, никогда не увеличивать его.
 TELEGRAM_DOWNLOAD_LIMIT_MB = 20
 
+# pydub грузит весь файл в память для обрезки (trim_audio); на записи ~30 мин пиковый
+# RSS доходит до ~4 ГБ (см. PR-6 в аудите — замена pydub на потоковый ffmpeg). Пока
+# замены нет, поднимать реальный лимит длительности выше этого порога небезопасно —
+# уронит процесс по памяти. Значение из env может только уменьшать эффективный лимит.
+PYDUB_SAFE_MAX_DURATION_SEC = 1800
+
 
 def _default_db_path() -> str:
     """БД по умолчанию рядом с проектом.
@@ -82,6 +88,12 @@ class Settings(BaseSettings):
         """Реальный лимит файла: env может только УМЕНЬШИТЬ 20 МБ, не увеличить —
         Telegram Bot API (getFile) не отдаёт боту файлы больше этого порога."""
         return min(self.max_audio_mb, TELEGRAM_DOWNLOAD_LIMIT_MB)
+
+    @property
+    def effective_max_duration_sec(self) -> int:
+        """Реальный лимит длительности: env может только УМЕНЬШИТЬ 1800 с, не увеличить —
+        выше этого порога pydub рискует уронить процесс по памяти (см. PR-6)."""
+        return min(self.max_duration_sec, PYDUB_SAFE_MAX_DURATION_SEC)
 
     def model_post_init(self, __context: object) -> None:
         # DB_PATH из окружения имеет приоритет; иначе — путь по умолчанию.

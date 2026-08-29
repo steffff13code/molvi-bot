@@ -104,6 +104,17 @@ def test_max_duration_is_sane() -> None:
     assert settings.max_duration_sec <= 1800
 
 
+def test_effective_max_duration_sec_cannot_exceed_pydub_ceiling() -> None:
+    # env может только уменьшить лимит длительности, никогда не увеличить его
+    # выше безопасного для pydub порога (см. PYDUB_SAFE_MAX_DURATION_SEC)
+    original = settings.max_duration_sec
+    object.__setattr__(settings, "max_duration_sec", 7200)
+    try:
+        assert settings.effective_max_duration_sec == 1800
+    finally:
+        object.__setattr__(settings, "max_duration_sec", original)
+
+
 # ──────────────────────────────────────────────────────────────────────
 # 4. FREE_MINUTES соответствует сайту
 # ──────────────────────────────────────────────────────────────────────
