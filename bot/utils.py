@@ -99,3 +99,49 @@ def split_telegram_text(text: str, limit: int = 4096) -> list[str]:
 def as_txt_file(filename: str, text: str) -> BufferedInputFile:
     data = text.encode("utf-8")
     return BufferedInputFile(data, filename=filename)
+
+
+# Теги, которые реально встречаются в md_to_html() и которые Telegram parse_mode=HTML понимает.
+_SAFE_HTML_TAGS = {"b", "i", "u", "s", "code", "pre", "a"}
+
+# Тег целиком (<...>) или HTML-сущность (&...;) целиком, иначе — один любой символ.
+# Атомарность тега/сущности — то, что не даёт split_html_safe разрезать их пополам.
+_HTML_TOKEN_RE = re.compile(r"<[^>]*>|&[a-zA-Z#][a-zA-Z0-9#]*;|.", re.DOTALL)
+
+
+def split_html_safe(html: str, limit: int) -> str:
+    """Обрезает HTML до limit символов так, чтобы результат остался валидным
+    для Telegram parse_mode=HTML: не рвёт теги и сущности, закрывает открытое.
+
+    Итоговая строка может быть чуть длиннее limit — на длину дописанных
+    закрывающих тегов; это ожидаемо, вызывающий код должен оставлять запас.
+    """
+    if len(html) <= limit:
+        return html
+
+    stack: list[str] = []
+    out: list[str] = []
+    length = 0
+
+    for unit in _HTML_TOKEN_RE.finditer(html):
+        token = unit.group(0)
+        if length + len(token) > limit:
+            break
+        out.append(token)
+        length += len(token)
+
+        if token.startswith("<") and token.endswith(">") and len(token) > 1:
+            inner = token[1:-1].strip()
+            if inner.startswith("/"):
+                name = inner[1:].strip().lower()
+                if stack and stack[-1] == name:
+                    stack.pop()
+            else:
+                name = inner.split()[0].lower() if inner.split() else ""
+                if name in _SAFE_HTML_TAGS and not inner.endswith("/"):
+                    stack.append(name)
+
+    result = "".join(out)
+    for name in reversed(stack):
+        result += f"</{name}>"
+    return result

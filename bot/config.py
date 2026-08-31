@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     # Тарифы / лимиты (единый источник правды, см. services/pricing.py)
     free_minutes: int = 60          # бесплатный лимит расшифровки, минут
     price_per_hour: int = 50        # ₽/час (≈ 0,83 ₽/мин)
+    template_runs_limit: int = 3    # разных шаблонов на одну запись без доплаты
 
     # Админ / API
     admin_id: int = 0               # Telegram ID владельца (для /stats)

@@ -20,8 +20,14 @@ class _Entry:
     transcript: str
     duration_sec: int | None
     expires_at: float
-    last_result: str | None = field(default=None)  # последний результат GigaChat
-    last_key: str | None = field(default=None)      # ключ шаблона для last_result
+    results: dict[str, str] = field(default_factory=dict)  # ключ шаблона → готовый текст (кэш)
+    runs: int = 0                                            # сколько РАЗНЫХ шаблонов прогнано
+    last_key: str | None = field(default=None)               # ключ последнего прогнанного шаблона
+
+    @property
+    def last_result(self) -> str | None:
+        """Совместимость: результат последнего прогнанного шаблона."""
+        return self.results.get(self.last_key or "")
 
 
 class SessionStore:
@@ -51,11 +57,25 @@ class SessionStore:
         return entry
 
     def set_result(self, token: str, result: str, key: str) -> None:
-        """Сохраняет последний результат GigaChat для скачивания."""
+        """Кэширует результат конкретного шаблона и запоминает его как последний —
+        для 'скачать результат ещё раз' и мгновенной отдачи при повторном нажатии."""
         entry = self._data.get(token)
         if entry:
-            entry.last_result = result
+            entry.results[key] = result
             entry.last_key = key
+
+    def get_result(self, token: str, key: str) -> str | None:
+        """Кэшированный результат конкретного шаблона, если он уже считался."""
+        entry = self._data.get(token)
+        return entry.results.get(key) if entry else None
+
+    def bump_runs(self, token: str) -> int:
+        """Учитывает ещё один РАЗНЫЙ прогон шаблона (не из кэша). Возвращает новое значение."""
+        entry = self._data.get(token)
+        if not entry:
+            return 0
+        entry.runs += 1
+        return entry.runs
 
     def drop(self, token: str) -> None:
         self._data.pop(token, None)

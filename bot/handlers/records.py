@@ -4,10 +4,11 @@ from datetime import datetime
 
 from aiogram import F, Router, types
 
-from bot.db.queries import get_record, get_user_records
-from bot.keyboards.inline import choose_mode_kb
+from bot.db.queries import get_minutes_used, get_record, get_user_records, is_whitelisted, log_event
+from bot.keyboards.inline import choose_mode_kb, paywall_kb
 from bot.keyboards.reply import BTN_MY_RECORDS, main_menu_kb
 from bot.services.nav_cleanup import nav_cleanup
+from bot.services.pricing import FREE_MINUTES, paywall_text
 from bot.services.session_store import session_store
 
 router = Router()
@@ -94,6 +95,19 @@ async def view_record(cb: types.CallbackQuery) -> None:
         return
 
     await cb.answer()
+
+    # Старая запись из «Моих записей» и так уже оплачена при первом распознавании,
+    # но без этой проверки её можно было гонять через LLM бесконечно и бесплатно
+    # даже после исчерпания лимита — ровно тот же обход, что и с шаблонами.
+    if not await is_whitelisted(user.id, user.username):
+        used = await get_minutes_used(user.id)
+        if FREE_MINUTES - used <= 0:
+            await log_event(user_id=user.id, type_="paywall")
+            await cb.message.answer(
+                paywall_text(), parse_mode="HTML", disable_web_page_preview=True,
+                reply_markup=paywall_kb(),
+            )
+            return
 
     dur = _fmt_duration(rec["duration_sec"])
     date = _fmt_date(rec["created_at"])
