@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Protocol
 
 from bot.config import settings
+from bot.services.concurrency import LLM_LANE
 from bot.services.gigachat import GigaChatClient, LLMResult
+
+OnWait = Callable[[int, float], Awaitable[None]]
+OnStart = Callable[[], Awaitable[None]]
 
 
 class LLMProvider(Protocol):
     async def summarize(self, *, text: str, system: str) -> str: ...
-    async def call(self, *, text: str, system: str) -> LLMResult: ...
+    async def call(
+        self, *, text: str, system: str, on_wait: OnWait | None = None, on_start: OnStart | None = None,
+    ) -> LLMResult: ...
 
 
 class GigaChatLLM:
@@ -21,10 +28,17 @@ class GigaChatLLM:
             model=settings.gigachat_model,
         )
 
-    async def call(self, *, text: str, system: str) -> LLMResult:
-        # v3: точность важнее креатива (temp 0.2); подробное summary требует запаса токенов.
-        return await self._client.call(
-            system=system, user=text, temperature=0.2, max_tokens=3500
+    async def call(
+        self, *, text: str, system: str, on_wait: OnWait | None = None, on_start: OnStart | None = None,
+    ) -> LLMResult:
+        # Захват на границе провайдера (а не в хендлере) — разрешение освобождается
+        # на паузах между ретраями, и будущие проходы конвейера (PR-18) покрываются
+        # автоматически. v3: точность важнее креатива (temp 0.2); подробное summary
+        # требует запаса токенов.
+        return await LLM_LANE.run(
+            lambda: self._client.call(system=system, user=text, temperature=0.2, max_tokens=3500),
+            on_wait=on_wait,
+            on_start=on_start,
         )
 
     async def summarize(self, *, text: str, system: str) -> str:

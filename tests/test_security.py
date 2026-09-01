@@ -100,17 +100,17 @@ def test_file_size_limit_bytes() -> None:
 
 
 def test_max_duration_is_sane() -> None:
-    # пока обрезка идёт через pydub, длинная запись = пик 4 ГБ RSS
-    assert settings.max_duration_sec <= 1800
+    # с PR-6 обрезка идёт через ffmpeg (O(1) память) — потолок 7200 с (2 часа)
+    assert settings.max_duration_sec <= 7200
 
 
-def test_effective_max_duration_sec_cannot_exceed_pydub_ceiling() -> None:
+def test_effective_max_duration_sec_cannot_exceed_hard_ceiling() -> None:
     # env может только уменьшить лимит длительности, никогда не увеличить его
-    # выше безопасного для pydub порога (см. PYDUB_SAFE_MAX_DURATION_SEC)
+    # выше жёсткого потолка (см. MAX_DURATION_HARD_CEILING_SEC)
     original = settings.max_duration_sec
-    object.__setattr__(settings, "max_duration_sec", 7200)
+    object.__setattr__(settings, "max_duration_sec", 36000)
     try:
-        assert settings.effective_max_duration_sec == 1800
+        assert settings.effective_max_duration_sec == 7200
     finally:
         object.__setattr__(settings, "max_duration_sec", original)
 

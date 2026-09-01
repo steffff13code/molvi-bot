@@ -13,11 +13,13 @@ _env_file = BASE_DIR / ".env"
 # может только уменьшать эффективный лимит, никогда не увеличивать его.
 TELEGRAM_DOWNLOAD_LIMIT_MB = 20
 
-# pydub грузит весь файл в память для обрезки (trim_audio); на записи ~30 мин пиковый
-# RSS доходит до ~4 ГБ (см. PR-6 в аудите — замена pydub на потоковый ffmpeg). Пока
-# замены нет, поднимать реальный лимит длительности выше этого порога небезопасно —
-# уронит процесс по памяти. Значение из env может только уменьшать эффективный лимит.
-PYDUB_SAFE_MAX_DURATION_SEC = 1800
+# До PR-6 обрезка (trim_audio) шла через pydub — вся запись грузилась в память,
+# на ~30 мин пиковый RSS доходил до ~4 ГБ. С PR-6 обрезка идёт через ffmpeg
+# (-c copy, без декодирования, память O(1)) — реальной технической причины
+# держать потолок в 1800 с больше нет. 7200 с (2 часа) — рабочий потолок,
+# согласованный с владельцем как следующее значение MAX_DURATION_SEC на Railway;
+# значение из env может только уменьшать эффективный лимит, не увеличивать его.
+MAX_DURATION_HARD_CEILING_SEC = 7200
 
 
 def _default_db_path() -> str:
@@ -48,6 +50,7 @@ class Settings(BaseSettings):
     gigachat_auth_key: str
     gigachat_scope: str = "GIGACHAT_API_PERS"
     gigachat_model: str = "GigaChat-2-Pro"
+    gigachat_streams: int = 1       # физлицу GigaChat даёт ровно 1 поток; ИП-тариф — отдельное решение
 
     # Провайдеры (swap-ready, см. PROVIDER.md).
     stt_provider: str = "nexara"        # nexara | salute
@@ -92,9 +95,8 @@ class Settings(BaseSettings):
 
     @property
     def effective_max_duration_sec(self) -> int:
-        """Реальный лимит длительности: env может только УМЕНЬШИТЬ 1800 с, не увеличить —
-        выше этого порога pydub рискует уронить процесс по памяти (см. PR-6)."""
-        return min(self.max_duration_sec, PYDUB_SAFE_MAX_DURATION_SEC)
+        """Реальный лимит длительности: env может только УМЕНЬШИТЬ 7200 с, не увеличить."""
+        return min(self.max_duration_sec, MAX_DURATION_HARD_CEILING_SEC)
 
     def model_post_init(self, __context: object) -> None:
         # DB_PATH из окружения имеет приоритет; иначе — путь по умолчанию.

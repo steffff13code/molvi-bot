@@ -15,10 +15,12 @@ import httpx
 from loguru import logger
 
 from bot.config import settings
+from bot.services.concurrency import STT_LANE
+from bot.services.retry import NonRetryable
 from bot.services.salute_speech import SaluteSpeechClient, SaluteSpeechError
 
 
-class STTQuotaError(SaluteSpeechError):
+class STTQuotaError(SaluteSpeechError, NonRetryable):
     """Исчерпан пакет/баланс STT-провайдера (ретраи не помогут)."""
 
 
@@ -48,6 +50,10 @@ class NexaraSTT:
         self._url = settings.nexara_url
 
     async def transcribe(self, source_path: str, duration_sec: int | None) -> str:
+        # Захват на границе провайдера — освобождается между ретраями.
+        return await STT_LANE.run(lambda: self._transcribe(source_path))
+
+    async def _transcribe(self, source_path: str) -> str:
         if not self._key:
             raise STTError("NEXARA_API_KEY не задан")
 
@@ -64,7 +70,8 @@ class NexaraSTT:
         data = {"response_format": "json", "language": "ru"}
 
         # Nexara использует нормальный TLS — не выключаем верификацию SSL.
-        async with httpx.AsyncClient(verify=True, timeout=600) as client:
+        # 300с (не 600) — зависший STT не должен держать разрешение лишние 10 минут.
+        async with httpx.AsyncClient(verify=True, timeout=300) as client:
             resp = await client.post(self._url, headers=headers, files=files, data=data)
             if resp.status_code in (402, 429):
                 raise STTQuotaError(f"Nexara {resp.status_code}: пакет/лимит исчерпан")
@@ -92,6 +99,10 @@ class SaluteSTT:
         )
 
     async def transcribe(self, source_path: str, duration_sec: int | None) -> str:
+        # Захват на границе провайдера — освобождается между ретраями.
+        return await STT_LANE.run(lambda: self._transcribe(source_path, duration_sec))
+
+    async def _transcribe(self, source_path: str, duration_sec: int | None) -> str:
         from bot.services.audio import AUDIO_DIR, convert_to_wav
 
         pcm_path = str(AUDIO_DIR / f"{uuid.uuid4().hex}.pcm")

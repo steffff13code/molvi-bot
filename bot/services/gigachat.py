@@ -52,8 +52,11 @@ class GigaChatClient:
             "max_tokens": max_tokens,
         }
 
+        # 60с общего таймаута не хватает на генерацию 3500 токенов на длинных
+        # записях — это и есть источник лишних ретраев, которые упомянуты в PR-6.
+        timeout = httpx.Timeout(connect=10, read=180, write=60, pool=10)
         start = time.monotonic()
-        async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=60) as client:
+        async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=timeout) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code >= 400:
                 logger.error("GigaChat error {code}: {text}", code=resp.status_code, text=resp.text)

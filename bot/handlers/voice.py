@@ -28,7 +28,7 @@ from bot.keyboards.inline import (
 )
 from bot.keyboards.reply import main_menu_kb
 from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
-from bot.services.audio import AUDIO_DIR, ensure_dirs, trim_audio
+from bot.services.audio import AUDIO_DIR, ensure_dirs, probe_duration, trim_audio
 from bot.services.export import build_export
 from bot.services.nav_cleanup import nav_cleanup
 from bot.services.pricing import FREE_MINUTES, paywall_text, template_limit_text
@@ -106,29 +106,6 @@ def _is_supported_document(doc: types.Document) -> bool:
     if mime.startswith("audio/") or mime.startswith("video/"):
         return True
     return _ext_from_name(doc.file_name) in _SUPPORTED_DOC_EXTS
-
-
-async def _duration_from_file(path: str) -> int | None:
-    """Длительность по самому файлу через ffprobe — Telegram не отдаёт duration для
-    файлов, присланных «как документ». ffmpeg (и ffprobe рядом с ним) есть в
-    окружении (nixpacks.toml). Возвращает None, если определить не удалось."""
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "ffprobe", "-v", "error", "-show_entries", "format=duration",
-            "-of", "default=noprint_wrappers=1:nokey=1", path,
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
-        )
-    except OSError:
-        return None
-    try:
-        out, _ = await asyncio.wait_for(proc.communicate(), timeout=30)
-    except asyncio.TimeoutError:
-        proc.kill()
-        return None
-    try:
-        return int(float(out.decode().strip()))
-    except (ValueError, AttributeError):
-        return None
 
 
 async def _ensure_consent(message: types.Message, user_id: int) -> bool:
@@ -290,7 +267,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
 
     if duration_sec is None:
         # Документ — Telegram не прислал длительность, определяем её по самому файлу.
-        duration_sec = await _duration_from_file(source_path)
+        duration_sec = await probe_duration(source_path)
         if duration_sec is not None and duration_sec > settings.effective_max_duration_sec:
             await log_event(user_id=user.id, type_="error")
             await status_msg.edit_text(
@@ -493,6 +470,12 @@ async def on_get_as_message(cb: types.CallbackQuery) -> None:
         await cb.message.answer(part)
 
 
+# Защита от двойного клика: кнопка в клиенте остаётся активной до cb.answer(), и
+# второй клик до него уходил вторым вызовом LLM — при одном потоке GigaChat (см.
+# LLM_LANE) это убивало первый ответ.
+_inflight_templates: set[tuple[int, str, str]] = set()
+
+
 async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
     user = cb.from_user
     if not user or not cb.message:
@@ -510,52 +493,83 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
         await _render(cb, token, key, cached)
         return
 
-    whitelisted = await is_whitelisted(user.id, user.username)
-    if not whitelisted and entry.runs >= settings.template_runs_limit:
-        await log_event(user_id=user.id, type_="paywall")
-        await cb.answer()
-        await cb.message.edit_text(  # type: ignore[union-attr]
-            template_limit_text(), parse_mode="HTML", reply_markup=paywall_kb()
-        )
+    inflight_key = (user.id, token, key)
+    if inflight_key in _inflight_templates:
+        await cb.answer("Уже обрабатываю…")
         return
-
-    # Считаем прогон сразу — GigaChat вызывается ниже независимо от исхода
-    # (ретраи with_retries могут стоить денег и при итоговой ошибке).
-    session_store.bump_runs(token)
-
-    await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)
-    await cb.answer()
-
-    # ДО вызова — иначе провалившиеся попытки не считаются, и доля смены
-    # шаблона (switch_pct) недосчитывает. job_id=token связывает это событие
-    # с recognize/llm_call этой же записи.
-    await log_event(user_id=user.id, type_="template", template=key, job_id=token)
+    _inflight_templates.add(inflight_key)
 
     try:
-        system, prefix = build_summary_prompt(key)
-        result = await with_retries(
-            lambda: _llm.call(text=prefix + entry.transcript, system=system),
-            attempts=3,
-            base_delay=1.0,
-        )
-        summary = result.text
-        await log_event(
-            user_id=user.id, type_="llm_call", job_id=token,
-            model=result.model, tokens_in=result.tokens_in, tokens_out=result.tokens_out,
-            tokens_cached=result.tokens_cached, latency_ms=result.latency_ms,
-        )
-    except Exception as e:
-        logger.exception("Summary failed: {e}", e=e)
-        await log_event(user_id=user.id, type_="error", err_code="llm_fail")
-        await cb.message.edit_text(
-            "⚠️ Не удалось обработать через GigaChat. Попробуйте ещё раз.",
-            reply_markup=choose_mode_kb(token),
-        )
-        return
+        # cb.answer() — ДО edit_text, а не после: пока не вызван, кнопка в клиенте
+        # остаётся «нажимаемой», и промедление здесь как раз и открывало двойной клик.
+        await cb.answer()
 
-    # Кэшируем результат — по нему считать заново уже не придётся
-    session_store.set_result(token, summary, key)
-    await _render(cb, token, key, summary)
+        whitelisted = await is_whitelisted(user.id, user.username)
+        if not whitelisted and entry.runs >= settings.template_runs_limit:
+            await log_event(user_id=user.id, type_="paywall")
+            await cb.message.edit_text(  # type: ignore[union-attr]
+                template_limit_text(), parse_mode="HTML", reply_markup=paywall_kb()
+            )
+            return
+
+        # Считаем прогон сразу — GigaChat вызывается ниже независимо от исхода
+        # (ретраи with_retries могут стоить денег и при итоговой ошибке).
+        session_store.bump_runs(token)
+
+        await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)  # type: ignore[union-attr]
+
+        # ДО вызова — иначе провалившиеся попытки не считаются, и доля смены
+        # шаблона (switch_pct) недосчитывает. job_id=token связывает это событие
+        # с recognize/llm_call этой же записи.
+        await log_event(user_id=user.id, type_="template", template=key, job_id=token)
+
+        async def _on_llm_wait(position: int, eta: float) -> None:
+            # LLM_LANE занята (один поток на физлицо у GigaChat) — честная оценка
+            # ожидания вместо того, чтобы пользователь просто смотрел на "Обрабатываю…".
+            try:
+                await cb.message.edit_text(  # type: ignore[union-attr]
+                    f"⏳ Вы {position}-й в очереди. Начну примерно через "
+                    f"{int(eta)} с — напишу, как будет готово."
+                )
+            except Exception:
+                pass
+
+        async def _on_llm_start() -> None:
+            try:
+                await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)  # type: ignore[union-attr]
+            except Exception:
+                pass
+
+        try:
+            system, prefix = build_summary_prompt(key)
+            result = await with_retries(
+                lambda: _llm.call(
+                    text=prefix + entry.transcript, system=system,
+                    on_wait=_on_llm_wait, on_start=_on_llm_start,
+                ),
+                attempts=3,
+                base_delay=1.0,
+            )
+            summary = result.text
+            await log_event(
+                user_id=user.id, type_="llm_call", job_id=token,
+                model=result.model, tokens_in=result.tokens_in, tokens_out=result.tokens_out,
+                tokens_cached=result.tokens_cached, latency_ms=result.latency_ms,
+            )
+        except Exception as e:
+            logger.exception("Summary failed: {e}", e=e)
+            await log_event(user_id=user.id, type_="error", err_code="llm_fail")
+            await cb.message.edit_text(  # type: ignore[union-attr]
+                "⚠️ Не удалось обработать через GigaChat. Попробуйте ещё раз.",
+                reply_markup=choose_mode_kb(token),
+            )
+            return
+
+        # Кэшируем результат — по нему считать заново уже не придётся
+        session_store.set_result(token, summary, key)
+        await _render(cb, token, key, summary)
+    finally:
+        _inflight_templates.discard(inflight_key)
 
 
 async def _render(cb: types.CallbackQuery, token: str, key: str, summary: str) -> None:
