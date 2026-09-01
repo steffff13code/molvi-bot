@@ -186,11 +186,29 @@ async def log_event(
     template: str | None = None,
     fmt: str | None = None,
     duration_sec: int | None = None,
+    job_id: str | None = None,
+    err_code: str | None = None,
+    meta: str | None = None,
+    latency_ms: int | None = None,
+    model: str | None = None,
+    pass_name: str | None = None,
+    tokens_in: int | None = None,
+    tokens_out: int | None = None,
+    tokens_cached: int | None = None,
+    pipeline_version: str | None = None,
 ) -> None:
     async with get_db() as db:
         await db.execute(
-            "INSERT INTO events(user_id, type, template, fmt, duration_sec) VALUES(?, ?, ?, ?, ?);",
-            (user_id, type_, template, fmt, duration_sec),
+            """INSERT INTO events(
+                user_id, type, template, fmt, duration_sec,
+                job_id, err_code, meta, latency_ms, model, pass_name,
+                tokens_in, tokens_out, tokens_cached, pipeline_version
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);""",
+            (
+                user_id, type_, template, fmt, duration_sec,
+                job_id, err_code, meta, latency_ms, model, pass_name,
+                tokens_in, tokens_out, tokens_cached, pipeline_version,
+            ),
         )
         await db.commit()
 

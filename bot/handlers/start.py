@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, set_consent, upsert_user, whitelist_add, whitelist_remove
+from bot.db.queries import get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, log_event, set_consent, upsert_user, whitelist_add, whitelist_remove
 from bot.keyboards.inline import consent_kb, tariffs_kb
 from bot.keyboards.reply import (
     BTN_HOME,
@@ -81,6 +81,7 @@ async def cmd_start(message: types.Message) -> None:
         await upsert_user(user_id=user.id, username=user.username, first_name=user.first_name)
 
     if user and not await has_consent(user.id):
+        await log_event(user_id=user.id, type_="consent_shown")
         await message.answer(CONSENT_TEXT, reply_markup=consent_kb(), disable_web_page_preview=True)
         return
 
@@ -98,6 +99,7 @@ async def on_consent(cb: types.CallbackQuery) -> None:
     if not user or not cb.message:
         return
     await set_consent(user.id)
+    await log_event(user_id=user.id, type_="consent_ok")
     await cb.answer("Спасибо! Согласие сохранено.")
     name = user.first_name or "друг"
     try:
@@ -169,6 +171,11 @@ async def tariffs(message: types.Message) -> None:
 @router.callback_query(F.data.startswith("buy:"))
 async def buy_stub(cb: types.CallbackQuery) -> None:
     # Заглушка: реальная оплата пока не подключена.
+    user = cb.from_user
+    if user:
+        # Самый ценный коммерческий сигнал — какой пакет пытались купить.
+        package = cb.data.split(":", 1)[1] if cb.data else None
+        await log_event(user_id=user.id, type_="buy_click", template=package)
     await cb.answer()
     if cb.message:
         await cb.message.answer(

@@ -269,10 +269,13 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         await bot.download_file(tg_file.file_path, destination=source_path)  # type: ignore[attr-defined]
     except Exception as e:
         logger.error("File download failed: {e}", e=e)
-        # err_code появится в events, когда PR-5 добавит эту колонку
-        await log_event(user_id=user.id, type_="error")
         err_text = str(e).lower()
-        if "file is too big" in err_text or "too big" in err_text or "file_too_big" in err_text:
+        too_big = "file is too big" in err_text or "too big" in err_text or "file_too_big" in err_text
+        await log_event(
+            user_id=user.id, type_="error",
+            err_code="download_too_big" if too_big else "download_other",
+        )
+        if too_big:
             await status_msg.edit_text(
                 f"⚠️ Файл слишком большой для загрузки через Telegram.\n\n"
                 f"Максимальный размер — <b>{settings.effective_max_mb} МБ</b>. "
@@ -322,6 +325,9 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         )
     except STTQuotaError:
         logger.error("STT quota exhausted (402)")
+        # Сервис лежит для ВСЕХ пользователей — владелец должен узнавать об этом
+        # из events, а не от пользователей в поддержке.
+        await log_event(user_id=user.id, type_="error", err_code="stt_quota")
         await status_msg.edit_text(
             "⚠️ Сервис распознавания временно недоступен (исчерпан пакет). "
             "Мы уже пополняем баланс — попробуйте чуть позже."
@@ -329,7 +335,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         return
     except Exception as e:
         logger.exception("Recognition failed: {e}", e=e)
-        await log_event(user_id=user.id, type_="error")
+        await log_event(user_id=user.id, type_="error", err_code="stt_fail")
         await status_msg.edit_text(
             "⚠️ Не удалось расшифровать запись. Попробуйте ещё раз через минуту."
         )
@@ -352,9 +358,12 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         # и пользователь не остаётся без текста при уже оплаченном вызове STT.
         await save_record(user.id, transcript, duration_sec)
         await add_minutes(user.id, billed_sec / 60.0)
-        await log_event(user_id=user.id, type_="recognize", duration_sec=billed_sec)
 
+        # token — ДО log_event('recognize'), чтобы передать его как job_id: без этой
+        # связки template/llm_call этой же записи нечем скоррелировать с recognize,
+        # и долю смены шаблона (главная метрика качества саммари) не посчитать.
         token = session_store.put(user.id, transcript, duration_sec)
+        await log_event(user_id=user.id, type_="recognize", duration_sec=billed_sec, job_id=token)
 
         balance_line = ""
         if not whitelisted:
@@ -435,6 +444,7 @@ async def on_download(cb: types.CallbackQuery) -> None:
         await log_event(user_id=user.id, type_="export", fmt=fmt)
     except Exception as e:
         logger.exception("Export failed: {e}", e=e)
+        await log_event(user_id=user.id, type_="error", err_code="export_fail")
         await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
 
 
@@ -461,6 +471,7 @@ async def on_download_result(cb: types.CallbackQuery) -> None:
         await log_event(user_id=user.id, type_="export", fmt=fmt)
     except Exception as e:
         logger.exception("Export result failed: {e}", e=e)
+        await log_event(user_id=user.id, type_="error", err_code="export_fail")
         await cb.message.answer("⚠️ Не удалось сформировать файл. Попробуйте другой формат.")
 
 
@@ -476,6 +487,7 @@ async def on_get_as_message(cb: types.CallbackQuery) -> None:
         await _recover_session(cb)
         return
     await cb.answer()
+    await log_event(user_id=user.id, type_="as_message")
     full = _watermarked(entry.transcript)
     for part in split_telegram_text(full):
         await cb.message.answer(part)
@@ -514,17 +526,27 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
     await cb.message.edit_text("⏳ Обрабатываю через GigaChat…", reply_markup=None)
     await cb.answer()
 
+    # ДО вызова — иначе провалившиеся попытки не считаются, и доля смены
+    # шаблона (switch_pct) недосчитывает. job_id=token связывает это событие
+    # с recognize/llm_call этой же записи.
+    await log_event(user_id=user.id, type_="template", template=key, job_id=token)
+
     try:
         system, prefix = build_summary_prompt(key)
-        summary = await with_retries(
-            lambda: _llm.summarize(text=prefix + entry.transcript, system=system),
+        result = await with_retries(
+            lambda: _llm.call(text=prefix + entry.transcript, system=system),
             attempts=3,
             base_delay=1.0,
         )
-        await log_event(user_id=user.id, type_="template", template=key)
+        summary = result.text
+        await log_event(
+            user_id=user.id, type_="llm_call", job_id=token,
+            model=result.model, tokens_in=result.tokens_in, tokens_out=result.tokens_out,
+            tokens_cached=result.tokens_cached, latency_ms=result.latency_ms,
+        )
     except Exception as e:
         logger.exception("Summary failed: {e}", e=e)
-        await log_event(user_id=user.id, type_="error")
+        await log_event(user_id=user.id, type_="error", err_code="llm_fail")
         await cb.message.edit_text(
             "⚠️ Не удалось обработать через GigaChat. Попробуйте ещё раз.",
             reply_markup=choose_mode_kb(token),
