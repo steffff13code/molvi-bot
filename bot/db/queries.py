@@ -428,6 +428,31 @@ async def get_stats_full(days: int = 30, exclude_admin: bool = True) -> dict:
         }
 
 
+# ───────────────────────── Расход токенов (PR-19: дашборд) ─────────────────────────
+
+async def get_token_usage(days: int = 30) -> list[dict]:
+    """Расход токенов по модели и дню — из events(type='llm_call'), которые
+    пишет providers/llm.py на каждый реальный вызов GigaChat (PR-5/PR-16)."""
+    async with get_db() as db:
+        since = f"-{int(days)} days" if days > 0 else "-36500 days"
+        cur = await db.execute(
+            """
+            SELECT
+                date(created_at) AS day,
+                COALESCE(model, '?') AS model,
+                COUNT(*) AS calls,
+                COALESCE(SUM(tokens_in), 0) AS tokens_in,
+                COALESCE(SUM(tokens_out), 0) AS tokens_out
+            FROM events
+            WHERE type='llm_call' AND created_at >= datetime('now', ?)
+            GROUP BY day, model
+            ORDER BY day DESC, model;
+            """,
+            (since,),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+
 # ───────────────────────── Jobs (PR-20: надёжность-2) ─────────────────────────
 
 async def create_job(user_id: int, kind: str, token: str | None = None) -> int:

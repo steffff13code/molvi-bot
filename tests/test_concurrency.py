@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from bot.services.concurrency import Lane
+from bot.services.concurrency import FFMPEG_LANE, LLM_LANE, STT_LANE, Lane, queue_snapshot
 
 
 async def test_three_concurrent_calls_succeed_with_one_permit() -> None:
@@ -97,3 +97,23 @@ async def test_on_wait_not_called_when_permit_free() -> None:
     await lane.run(lambda: asyncio.sleep(0), on_wait=on_wait)
 
     assert not called
+
+
+def test_queue_snapshot_reports_all_three_lanes() -> None:
+    snap = queue_snapshot()
+    assert set(snap.keys()) == {"llm", "stt", "ffmpeg"}
+    for lane_snap in snap.values():
+        assert "depth" in lane_snap and "eta_sec" in lane_snap
+
+
+def test_queue_snapshot_reflects_real_lane_depth() -> None:
+    original_waiting = LLM_LANE._waiting
+    try:
+        LLM_LANE._waiting = 4
+        snap = queue_snapshot()
+        assert snap["llm"]["depth"] == 4
+    finally:
+        LLM_LANE._waiting = original_waiting
+    # sanity: другие полосы не задеты
+    assert queue_snapshot()["stt"]["depth"] == STT_LANE.depth
+    assert queue_snapshot()["ffmpeg"]["depth"] == FFMPEG_LANE.depth
