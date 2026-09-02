@@ -30,10 +30,12 @@ async def get_db() -> AsyncIterator[aiosqlite.Connection]:
 
 
 async def init_db() -> None:
-    """Создаёт схему МЕТАДАННЫХ (Вариант А — контент пользователей не хранится).
+    """Создаёт схему БД: метаданные (users/events/whitelist) + records.
 
-    В БД нет ни расшифровок, ни саммари, ни файлов — только обезличиваемые
-    метаданные для лимитов и агрегированной статистики.
+    Аудиофайл удаляется сразу после обработки — сырых файлов в БД нет и не
+    было. Текст расшифровки в records хранится records_retention_days дней
+    (см. bot/config.py), после чего удаляется автоматически (cleanup.py) или
+    раньше — командой /forget. См. PR-7.
     """
     _ensure_parent_dir(settings.db_path)
     async with aiosqlite.connect(settings.db_path) as db:

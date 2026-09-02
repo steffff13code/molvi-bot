@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     free_minutes: int = 60          # бесплатный лимит расшифровки, минут
     price_per_hour: int = 50        # ₽/час (≈ 0,83 ₽/мин)
     template_runs_limit: int = 3    # разных шаблонов на одну запись без доплаты
+    records_retention_days: int = 30  # хранение текста расшифровки в «Моих записях»
 
     # Админ / API
     admin_id: int = 0               # Telegram ID владельца (для /stats)
@@ -79,8 +80,11 @@ class Settings(BaseSettings):
     admin_password: str = ""        # plaintext-пароль (legacy; используется если hash не задан)
     api_port: int = 0               # PORT от Railway; 0 = API не поднимать
 
-    # HTTP
-    sber_verify_ssl: bool = False
+    # HTTP — канал, по которому уходят ПОЛНЫЕ расшифровки (включая шаблоны вроде
+    # «Сессия с психологом») и долгоживущий клиентский секрет GigaChat. verify=False
+    # отключает и проверку цепочки, и проверку имени хоста — никогда не по умолчанию.
+    sber_verify_ssl: bool = True
+    sber_ca_bundle: str = ""      # путь к CA-бандлу НУЦ Минцифры; пусто = системный certifi
 
     # Public URLs (используются в меню/кнопках бота)
     site_url: str = "https://molvi-ai.ru/"
@@ -117,3 +121,10 @@ except Exception as e:  # pragma: no cover
         "Заполните ключи (TELEGRAM_BOT_TOKEN, GIGACHAT_AUTH_KEY; "
         "SALUTESPEECH_AUTH_KEY нужен только при STT_PROVIDER=salute)."
     ) from e
+
+
+def sber_verify() -> bool | str:
+    """True | путь к CA-бандлу. Никогда не False — httpx(verify=...) для oauth.py
+    и gigachat.py, канал с полными расшифровками пользователей."""
+    p = settings.sber_ca_bundle
+    return p if p and os.path.exists(p) else True

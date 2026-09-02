@@ -258,7 +258,8 @@ _ADMIN_HTML = """\
         <thead><tr><th>#</th><th>TG ID</th><th>Username</th><th>Заметка</th><th>Добавлен</th><th></th></tr></thead>
         <tbody id="wlBody"><tr><td colspan="6" style="color:#475569">Загрузка…</td></tr></tbody>
       </table>
-      <p class="note">⚠ Контент пользователей не хранится (Вариант А). Только метаданные.</p>
+      <p class="note">⚠ Аудиофайл удаляется сразу после обработки. Текст расшифровки хранится
+      в «Моих записях» RECORDS_RETENTION_DAYS дней, удаляется автоматически или раньше — командой /forget.</p>
     </div>
   </div>
 </div>
@@ -374,8 +375,9 @@ async def _admin_get(request: web.Request) -> web.Response:
     if not _valid_session(request):
         return web.Response(content_type="text/html",
                             text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->", ""))
-    return web.Response(content_type="text/html",
-                        text=_ADMIN_HTML.replace("MOLVI_ADMIN_CSS", _CSS))
+    html = _ADMIN_HTML.replace("MOLVI_ADMIN_CSS", _CSS)
+    html = html.replace("RECORDS_RETENTION_DAYS", str(settings.records_retention_days))
+    return web.Response(content_type="text/html", text=html)
 
 
 async def _admin_login(request: web.Request) -> web.Response:

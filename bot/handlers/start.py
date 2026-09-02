@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import html as _html
+
 from aiogram import F, Router, types
 from aiogram.filters import Command
 
 from bot.config import settings
-from bot.db.queries import get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, log_event, set_consent, upsert_user, whitelist_add, whitelist_remove
+from bot.db.queries import delete_user_records, get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, log_event, set_consent, upsert_user, whitelist_add, whitelist_remove
 from bot.keyboards.inline import consent_kb, tariffs_kb
 from bot.keyboards.reply import (
     BTN_HOME,
@@ -35,7 +37,8 @@ WELCOME_TEXT = """Привет, {name}! 👋
 
 ⚡ Час записи — ~5 минут расшифровки. Первые {free} минут — <b>бесплатно</b>.
 
-🔒 Мы не храним ваши файлы и расшифровки — они остаются только у вас.
+🔒 Аудиофайл удаляется сразу после обработки. Текст расшифровки хранится {retention} дней,
+чтобы вы могли вернуться к нему в «Моих записях» — удалить раньше можно командой /forget.
 
 🌐 Сайт: <a href="https://molvi-ai.ru/">molvi-ai.ru</a>
 
@@ -69,7 +72,9 @@ DEVICE_TEXT = (
 
 
 def _welcome(name: str) -> str:
-    return WELCOME_TEXT.format(name=name, free=FREE_MINUTES)
+    return WELCOME_TEXT.format(
+        name=_html.escape(name), free=FREE_MINUTES, retention=settings.records_retention_days,
+    )
 
 
 @router.message(Command("start"))
@@ -208,6 +213,48 @@ async def home_handler(message: types.Message) -> None:
     )
     if user:
         _last_home[user.id] = sent.message_id
+
+
+FORGET_CONFIRM_TEXT = (
+    "🗑 <b>Удалить все ваши сохранённые расшифровки?</b>\n\n"
+    "Аудиофайлы уже удалены — останется только текст в «Моих записях». "
+    "Действие необратимо."
+)
+
+
+def _forget_confirm_kb() -> types.InlineKeyboardMarkup:
+    return types.InlineKeyboardMarkup(
+        inline_keyboard=[
+            [types.InlineKeyboardButton(text="🗑 Да, удалить всё", callback_data="forget:confirm")],
+            [types.InlineKeyboardButton(text="Отмена", callback_data="forget:cancel")],
+        ]
+    )
+
+
+@router.message(Command("forget"))
+async def cmd_forget(message: types.Message) -> None:
+    if not message.from_user:
+        return
+    await message.answer(FORGET_CONFIRM_TEXT, parse_mode="HTML", reply_markup=_forget_confirm_kb())
+
+
+@router.callback_query(F.data == "forget:confirm")
+async def cmd_forget_confirm(cb: types.CallbackQuery) -> None:
+    user = cb.from_user
+    if not user or not cb.message:
+        return
+    deleted = await delete_user_records(user.id)
+    await cb.answer()
+    await cb.message.edit_text(  # type: ignore[union-attr]
+        f"✅ Удалено записей: <b>{deleted}</b>.", parse_mode="HTML",
+    )
+
+
+@router.callback_query(F.data == "forget:cancel")
+async def cmd_forget_cancel(cb: types.CallbackQuery) -> None:
+    await cb.answer("Отменено")
+    if cb.message:
+        await cb.message.edit_text("Отменено — записи не тронуты.")  # type: ignore[union-attr]
 
 
 _TEMPLATE_NAMES = {
@@ -473,13 +520,13 @@ async def cmd_user_info(message: types.Message) -> None:
     gifted = float(info.get("gifted_minutes") or 0)
     remaining = max(0.0, FREE_MINUTES - used)
     wl = info.get("whitelist")
-    name = info.get("first_name") or "—"
-    uname = f"@{info['username']}" if info.get("username") else "нет"
+    name = _html.escape(info.get("first_name") or "—")
+    uname = f"@{_html.escape(info['username'])}" if info.get("username") else "нет"
 
     if wl:
         status = f"⭐ Безлимит (whitelist #{wl['id']})"
         if wl.get("note"):
-            status += f" — {wl['note']}"
+            status += f" — {_html.escape(wl['note'])}"
     elif gifted > 0:
         status = f"🎁 Подарочный пакет (+{_fmt_minutes(gifted)})"
     else:

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 import httpx
 
-from bot.config import settings
+from bot.config import sber_verify
 
 
 @dataclass
@@ -28,7 +28,7 @@ async def fetch_access_token(*, auth_key: str, scope: str) -> AccessToken:
     }
     data = {"scope": scope}
 
-    async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=30) as client:
+    async with httpx.AsyncClient(verify=sber_verify(), timeout=30) as client:
         resp = await client.post(url, headers=headers, data=data)
         resp.raise_for_status()
         payload = resp.json()

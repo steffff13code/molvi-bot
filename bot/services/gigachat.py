@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import httpx
 from loguru import logger
 
-from bot.config import settings
+from bot.config import sber_verify
 from bot.services.oauth import AccessToken, fetch_access_token
 
 
@@ -56,7 +56,7 @@ class GigaChatClient:
         # записях — это и есть источник лишних ретраев, которые упомянуты в PR-6.
         timeout = httpx.Timeout(connect=10, read=180, write=60, pool=10)
         start = time.monotonic()
-        async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=timeout) as client:
+        async with httpx.AsyncClient(verify=sber_verify(), timeout=timeout) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code >= 400:
                 logger.error("GigaChat error {code}: {text}", code=resp.status_code, text=resp.text)

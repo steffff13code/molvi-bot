@@ -169,6 +169,35 @@ async def get_record(record_id: int, user_id: int) -> Optional[dict]:
         return dict(row) if row else None
 
 
+async def delete_record(record_id: int, user_id: int) -> bool:
+    """Удаляет одну запись — строго с проверкой владельца."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "DELETE FROM records WHERE id=? AND user_id=?;", (record_id, user_id),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+
+async def delete_user_records(user_id: int) -> int:
+    """/forget — удаляет все записи пользователя. Возвращает число удалённых."""
+    async with get_db() as db:
+        cur = await db.execute("DELETE FROM records WHERE user_id=?;", (user_id,))
+        await db.commit()
+        return cur.rowcount or 0
+
+
+async def delete_old_records(days: int) -> int:
+    """Ретеншен: удаляет записи старше days дней. Возвращает число удалённых."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "DELETE FROM records WHERE created_at < datetime('now', ?);",
+            (f"-{int(days)} days",),
+        )
+        await db.commit()
+        return cur.rowcount or 0
+
+
 async def whitelist_list() -> list[dict]:
     async with get_db() as db:
         cur = await db.execute(
