@@ -25,8 +25,16 @@ from loguru import logger
 
 from bot.config import settings
 from bot.db.database import get_db
-from bot.db.queries import get_stats, whitelist_add, whitelist_list, whitelist_remove
+from bot.db.queries import (
+    get_stats,
+    get_token_usage,
+    gift_minutes,
+    whitelist_add,
+    whitelist_list,
+    whitelist_remove,
+)
 from bot.services import heartbeat
+from bot.services.concurrency import queue_snapshot
 
 # ───────────────────────── Сессии (в памяти) ─────────────────────────
 _SESSION_TTL = 8 * 3600  # 8 часов
@@ -227,6 +235,68 @@ _ADMIN_HTML = """\
   </div>
 
   <div class="sec">
+    <h2>Воронка</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Шаг</th><th>Пользователей</th><th>% от предыдущего</th></tr></thead>
+        <tbody id="funnelBody"><tr><td colspan="3" style="color:#475569">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Источники</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Источник (s/medium)</th><th>Пользователей</th></tr></thead>
+        <tbody id="srcBody"><tr><td colspan="2" style="color:#475569">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Очередь GigaChat/STT — сейчас</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Поток</th><th>В очереди</th><th>Оценка ожидания</th></tr></thead>
+        <tbody id="queueBody"><tr><td colspan="3" style="color:#475569">Загрузка…</td></tr></tbody>
+      </table>
+      <p class="note">Обновляется каждые 5 с. При тарифе физлица LLM_LANE — один поток,
+      это и есть главная операционная метрика.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Расход токенов по моделям</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>День</th><th>Модель</th><th>Вызовов</th><th>Токенов вход</th><th>Токенов выход</th></tr></thead>
+        <tbody id="tokBody"><tr><td colspan="5" style="color:#475569">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Выручка и платежи</h2>
+    <div class="card">
+      <p class="note">Платёжный контур (ЮKassa/Stars) ещё не подключён — раздел появится
+      после PR-14. Сейчас показывать здесь нечего, кроме нулей.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Начислить минуты пользователю</h2>
+    <div class="card">
+      <div class="form-row">
+        <input type="number" id="gift-id" placeholder="Telegram ID">
+        <input type="number" id="gift-min" placeholder="Минут" step="0.1">
+        <button class="btn btn-blue" onclick="giftMinutes()">🎁 Начислить</button>
+      </div>
+      <div id="giftMsg"></div>
+    </div>
+  </div>
+
+  <div class="sec">
     <h2>Шаблоны саммари</h2>
     <div class="card">
       <table>
@@ -305,6 +375,55 @@ async function load(days=30){
   document.getElementById('fmtBody').innerHTML=fRows.length
     ?fRows.map(([k,v])=>`<tr><td>${k.toUpperCase()}</td><td><span class="badge bb">${v}</span></td></tr>`).join('')
     :'<tr><td colspan="2" style="color:#475569">Нет данных за период</td></tr>';
+
+  const pct=(n,d)=>d>0?Math.round(n/d*100)+'%':'—';
+  const steps=[
+    ['Запустили бот', s.users_total, s.users_total],
+    ['Отправили аудио (когда-либо)', s.users_audio_total, s.users_total],
+    ['Использовали за период', s.users_audio, s.users_audio_total],
+    ['Упёрлись в лимит', s.users_paywall, s.users_audio||s.users_total],
+  ];
+  document.getElementById('funnelBody').innerHTML=steps
+    .map(([label,val,base])=>`<tr><td>${label}</td><td>${val??0}</td><td>${pct(val||0,base||0)}</td></tr>`).join('');
+
+  const src=s.sources||{};
+  const srcRows=Object.entries(src).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('srcBody').innerHTML=srcRows.length
+    ?srcRows.map(([k,v])=>`<tr><td>${k}</td><td><span class="badge bb">${v}</span></td></tr>`).join('')
+    :'<tr><td colspan="2" style="color:#475569">Нет данных за период</td></tr>';
+}
+
+async function loadTokens(days=30){
+  const d=await api('/admin/api/tokens?days='+days);
+  const items=d.items||[];
+  document.getElementById('tokBody').innerHTML=items.length
+    ?items.map(r=>`<tr><td>${r.day}</td><td>${r.model}</td><td>${r.calls}</td>`
+      +`<td>${r.tokens_in}</td><td>${r.tokens_out}</td></tr>`).join('')
+    :'<tr><td colspan="5" style="color:#475569">Вызовов LLM за период не было</td></tr>';
+}
+
+async function loadQueue(){
+  const q=await api('/admin/api/queue');
+  const rows=Object.entries(q).map(([name,v])=>
+    `<tr><td>${name}</td><td>${v.depth}</td><td>${v.eta_sec} с</td></tr>`);
+  document.getElementById('queueBody').innerHTML=rows.join('');
+}
+setInterval(loadQueue,5000);
+
+async function giftMinutes(){
+  const tg=document.getElementById('gift-id').value.trim();
+  const min=document.getElementById('gift-min').value.trim();
+  const msgEl=document.getElementById('giftMsg');
+  if(!tg||!min){msgEl.innerHTML='<span class="msg-err">Укажите TG ID и минуты</span>';return;}
+  try{
+    const r=await api('/admin/api/gift',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tg_id:tg,minutes:min})
+    });
+    msgEl.innerHTML=r.ok
+      ?'<span class="msg-ok">✓ Начислено</span>'
+      :'<span class="msg-err">Пользователь не найден</span>';
+  }catch(e){msgEl.innerHTML='<span class="msg-err">Ошибка</span>';}
 }
 
 async function loadWl(){
@@ -348,7 +467,7 @@ async function wlRemove(id){
   loadWl();
 }
 
-load(30);loadWl();
+load(30);loadWl();loadTokens(30);loadQueue();
 </script>
 </body></html>"""
 
@@ -481,6 +600,38 @@ async def _admin_wl_add(request: web.Request) -> web.Response:
     return web.json_response({"ok": ok}, status=200 if ok else 400)
 
 
+async def _admin_tokens(request: web.Request) -> web.Response:
+    if not _valid_session(request):
+        return web.json_response({"error": "unauthorized"}, status=401)
+    days = int(request.query.get("days", "30"))
+    days = max(1, min(days, 365))
+    return web.json_response({"items": await get_token_usage(days)})
+
+
+async def _admin_queue(request: web.Request) -> web.Response:
+    if not _valid_session(request):
+        return web.json_response({"error": "unauthorized"}, status=401)
+    return web.json_response(queue_snapshot())
+
+
+async def _admin_gift(request: web.Request) -> web.Response:
+    if not _valid_session(request):
+        return web.json_response({"error": "unauthorized"}, status=401)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    try:
+        tg_id = int(body.get("tg_id"))
+        minutes = float(body.get("minutes"))
+    except (TypeError, ValueError):
+        return web.json_response({"ok": False, "error": "bad tg_id/minutes"}, status=400)
+    if minutes <= 0:
+        return web.json_response({"ok": False, "error": "minutes must be positive"}, status=400)
+    ok = await gift_minutes(tg_id, minutes)
+    return web.json_response({"ok": ok}, status=200 if ok else 404)
+
+
 async def _admin_wl_remove(request: web.Request) -> web.Response:
     if not _valid_session(request):
         return web.json_response({"error": "unauthorized"}, status=401)
@@ -554,6 +705,9 @@ def build_app() -> web.Application:
     app.router.add_get("/admin/api/whitelist", _admin_wl_list)
     app.router.add_post("/admin/api/whitelist", _admin_wl_add)
     app.router.add_delete("/admin/api/whitelist/{id}", _admin_wl_remove)
+    app.router.add_get("/admin/api/tokens", _admin_tokens)
+    app.router.add_get("/admin/api/queue", _admin_queue)
+    app.router.add_post("/admin/api/gift", _admin_gift)
     # External API (X-Admin-Token)
     app.router.add_get("/api/stats", _api_stats)
     app.router.add_get("/api/whitelist", _api_wl_list)

@@ -51,6 +51,18 @@ class Settings(BaseSettings):
     gigachat_scope: str = "GIGACHAT_API_PERS"
     gigachat_model: str = "GigaChat-2-Pro"
     gigachat_streams: int = 1       # физлицу GigaChat даёт ровно 1 поток; ИП-тариф — отдельное решение
+    # С 16.07.2026 единый адрес — api.giga.chat; на старом gigachat.devices.sberbank.ru
+    # GigaChat 3 Ultra недоступен физически (PR-16).
+    gigachat_base_url: str = "https://api.giga.chat"
+
+    # Модель на каждый шаг будущего конвейера рассуждения (PR-16/17/18). Пусто —
+    # используется gigachat_model. Меняется правкой .env, без релиза — нужно для
+    # замеров PR-17 (например, LLM_MODEL_WRITE=GigaChat-3-Ultra).
+    llm_model_extract: str = ""
+    llm_model_reduce: str = ""
+    llm_model_plan: str = ""
+    llm_model_write: str = ""
+    llm_model_verify: str = ""
 
     # Провайдеры (swap-ready, см. PROVIDER.md).
     stt_provider: str = "nexara"        # nexara | salute

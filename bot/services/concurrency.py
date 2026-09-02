@@ -94,3 +94,12 @@ class Lane:
 LLM_LANE = Lane("llm", permits=settings.gigachat_streams, seed_sec=45)
 STT_LANE = Lane("stt", permits=3, seed_sec=90)
 FFMPEG_LANE = Lane("ffmpeg", permits=2, seed_sec=5)
+
+
+def queue_snapshot() -> dict[str, dict[str, float]]:
+    """Живой снимок очереди для дашборда (PR-19) — при тарифе в один поток
+    длина очереди LLM_LANE и есть главная операционная метрика."""
+    return {
+        lane.name: {"depth": lane.depth, "eta_sec": round(lane.eta_sec(), 1)}
+        for lane in (LLM_LANE, STT_LANE, FFMPEG_LANE)
+    }

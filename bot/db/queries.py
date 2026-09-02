@@ -3,24 +3,50 @@ from __future__ import annotations
 from typing import Optional
 
 from bot.db.database import get_db
+from bot.utils import parse_start_payload
 
 
 # ───────────────────────── Пользователи / согласие ─────────────────────────
 
-async def upsert_user(user_id: int, username: str | None, first_name: str | None) -> None:
+async def upsert_user(
+    user_id: int, username: str | None, first_name: str | None, payload: str = "",
+) -> None:
+    """Создаёт/обновляет пользователя. `payload` — сырой аргумент /start (PR-13).
+
+    Источник записывается только при первом заходе (COALESCE): повторный
+    /start по новой рекламной ссылке не должен затирать реальный первоисточник.
+    """
+    parsed = parse_start_payload(payload) if payload else {}
+    source = parsed.get("s")
+    campaign = parsed.get("c")
+    metrika_cid = parsed.get("i")
+    yclid = parsed.get("y")
+    source_at = source is not None
+
     async with get_db() as db:
         await db.execute(
             """
-            INSERT INTO users(user_id, username, first_name)
-            VALUES(?, ?, ?)
+            INSERT INTO users(user_id, username, first_name, source, campaign,
+                               start_payload, metrika_cid, yclid, source_at)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END)
             ON CONFLICT(user_id) DO UPDATE SET
                 username=excluded.username,
                 first_name=excluded.first_name,
-                last_seen_at=CURRENT_TIMESTAMP;
+                last_seen_at=CURRENT_TIMESTAMP,
+                source=COALESCE(users.source, excluded.source),
+                campaign=COALESCE(users.campaign, excluded.campaign),
+                start_payload=COALESCE(users.start_payload, excluded.start_payload),
+                metrika_cid=COALESCE(users.metrika_cid, excluded.metrika_cid),
+                yclid=COALESCE(users.yclid, excluded.yclid),
+                source_at=COALESCE(users.source_at, excluded.source_at);
             """,
-            (user_id, username, first_name),
+            (user_id, username, first_name, source, campaign,
+             payload or None, metrika_cid, yclid, source_at),
         )
         await db.commit()
+
+    if payload:
+        await log_event(user_id=user_id, type_="start", meta=payload[:64])
 
 
 async def has_consent(user_id: int) -> bool:
@@ -367,6 +393,16 @@ async def get_stats_full(days: int = 30, exclude_admin: bool = True) -> dict:
         # ── Whitelist ─────────────────────────────────────────────────
         whitelist_count = int(await scalar("SELECT COUNT(*) FROM whitelist;"))
 
+        # ── Источники (PR-13) ────────────────────────────────────────
+        # По дате регистрации (created_at), не source_at — у органических
+        # пользователей (голый /start) source_at всегда NULL.
+        cur = await db.execute(
+            f"SELECT COALESCE(source,'direct') AS s, COUNT(*) AS c "
+            f"FROM users WHERE 1=1 {tf_u} {excl_u} "
+            f"GROUP BY s ORDER BY c DESC LIMIT 10;", p_u,
+        )
+        sources = {str(r["s"]): int(r["c"]) for r in await cur.fetchall()}
+
         return {
             "period_days": days,
             "users_total": total_users,
@@ -388,4 +424,66 @@ async def get_stats_full(days: int = 30, exclude_admin: bool = True) -> dict:
             "formats": formats,
             "exports_total": exports_total,
             "whitelist_count": whitelist_count,
+            "sources": sources,
         }
+
+
+# ───────────────────────── Расход токенов (PR-19: дашборд) ─────────────────────────
+
+async def get_token_usage(days: int = 30) -> list[dict]:
+    """Расход токенов по модели и дню — из events(type='llm_call'), которые
+    пишет providers/llm.py на каждый реальный вызов GigaChat (PR-5/PR-16)."""
+    async with get_db() as db:
+        since = f"-{int(days)} days" if days > 0 else "-36500 days"
+        cur = await db.execute(
+            """
+            SELECT
+                date(created_at) AS day,
+                COALESCE(model, '?') AS model,
+                COUNT(*) AS calls,
+                COALESCE(SUM(tokens_in), 0) AS tokens_in,
+                COALESCE(SUM(tokens_out), 0) AS tokens_out
+            FROM events
+            WHERE type='llm_call' AND created_at >= datetime('now', ?)
+            GROUP BY day, model
+            ORDER BY day DESC, model;
+            """,
+            (since,),
+        )
+        return [dict(r) for r in await cur.fetchall()]
+
+
+# ───────────────────────── Jobs (PR-20: надёжность-2) ─────────────────────────
+
+async def create_job(user_id: int, kind: str, token: str | None = None) -> int:
+    """Фиксирует начало «рискового» окна (STT/LLM в процессе) — если процесс
+    убьют до finish_job(), запись останется 'processing' и её найдёт
+    get_stalled_jobs() при следующем старте (jobs_recovery.py)."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "INSERT INTO jobs(user_id, kind, token, state) VALUES(?, ?, ?, 'processing');",
+            (user_id, kind, token),
+        )
+        await db.commit()
+        return cur.lastrowid or 0
+
+
+async def finish_job(job_id: int, state: str) -> None:
+    """state: 'done' | 'failed'."""
+    async with get_db() as db:
+        await db.execute(
+            "UPDATE jobs SET state=?, updated_at=CURRENT_TIMESTAMP WHERE id=?;",
+            (state, job_id),
+        )
+        await db.commit()
+
+
+async def get_stalled_jobs() -> list[dict]:
+    """Всё, что осталось в 'processing' — процесс мог только что стартовать,
+    поэтому любая такая запись пережила незавершённое падение/рестарт."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "SELECT id, user_id, kind, token, created_at FROM jobs WHERE state='processing' "
+            "ORDER BY id;",
+        )
+        return [dict(r) for r in await cur.fetchall()]
