@@ -95,8 +95,24 @@ def test_max_duration_sec_positive() -> None:
 
 
 def test_file_size_limit_bytes() -> None:
-    max_bytes = settings.max_audio_mb * 1024 * 1024
-    assert max_bytes >= 20 * 1024 * 1024  # минимум 20 МБ
+    # 20 МБ — ПОТОЛОК Telegram Bot API (getFile), а не пол.
+    assert settings.max_audio_mb <= 20
+
+
+def test_max_duration_is_sane() -> None:
+    # с PR-6 обрезка идёт через ffmpeg (O(1) память) — потолок 7200 с (2 часа)
+    assert settings.max_duration_sec <= 7200
+
+
+def test_effective_max_duration_sec_cannot_exceed_hard_ceiling() -> None:
+    # env может только уменьшить лимит длительности, никогда не увеличить его
+    # выше жёсткого потолка (см. MAX_DURATION_HARD_CEILING_SEC)
+    original = settings.max_duration_sec
+    object.__setattr__(settings, "max_duration_sec", 36000)
+    try:
+        assert settings.effective_max_duration_sec == 7200
+    finally:
+        object.__setattr__(settings, "max_duration_sec", original)
 
 
 # ──────────────────────────────────────────────────────────────────────

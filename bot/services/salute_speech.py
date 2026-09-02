@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import httpx
 from loguru import logger
 
-from bot.config import settings
+from bot.config import sber_verify
 from bot.services.oauth import AccessToken, fetch_access_token
 
 _PCM_CONTENT_TYPE = "audio/x-pcm;bit=16;rate=16000"
@@ -112,7 +112,7 @@ class SaluteSpeechClient:
         with open(pcm_path, "rb") as f:
             audio_bytes = f.read()
 
-        async with httpx.AsyncClient(verify=settings.sber_verify_ssl, timeout=120) as client:
+        async with httpx.AsyncClient(verify=sber_verify(), timeout=120) as client:
             resp = await client.post(url, headers=headers, params=params, content=audio_bytes)
             if resp.status_code == 402:
                 raise SaluteSpeechQuotaError("SaluteSpeech 402: пакет распознавания исчерпан")
@@ -129,7 +129,7 @@ class SaluteSpeechClient:
     async def recognize_long(self, pcm_path: str) -> str:
         """Асинхронный режим для длинных записей: upload → async_recognize → poll → download."""
         token = await self._get_token()
-        verify = settings.sber_verify_ssl
+        verify = sber_verify()
 
         base_rest = "https://smartspeech.sber.ru/rest/v1"
         auth_headers = {"Authorization": f"Bearer {token}", "RqUID": str(uuid.uuid4())}

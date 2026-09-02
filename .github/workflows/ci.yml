@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check bot/ tests/ scripts/
+
+  types:
+    runs-on: ubuntu-latest
+    # Baseline-гейт, не полный запрет: 26 ошибок на момент PR-1 (bot/handlers/voice.py,
+    # union-attr) — не цель, а зафиксированный потолок регресса. Джоба падает, только если
+    # ошибок стало БОЛЬШЕ 26 — то есть на реальном регрессе, а не на уже известном долге.
+    # continue-on-error намеренно НЕ ставим: раз джоба зелёная на известном долге и красная
+    # только на регрессе, её можно (и нужно) сделать блокирующей — см. ci-ok ниже, где
+    # needs.types.result включён в обязательные. Закрыть весь долг (сделать mypy строгим
+    # с нуля) — отдельная задача, backlog B7.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - name: mypy (baseline — не блокирует merge, не даёт расти)
+        run: |
+          set +e
+          output=$(mypy --ignore-missing-imports bot/ 2>&1)
+          echo "$output"
+          count=$(echo "$output" | grep -c ": error:")
+          echo "mypy errors: $count (baseline: 26)"
+          if [ "$count" -gt 26 ]; then
+            echo "::error::Число ошибок mypy выросло: $count > 26 (базовая линия PR-1)"
+            exit 1
+          fi
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q --cov=bot --cov-report=term-missing
+
+  import-smoke:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: "x"
+      GIGACHAT_AUTH_KEY: "x"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -c "import bot.main, bot.handlers.voice, bot.api.server"
+
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pip-audit -r requirements.txt
+
+  ci-ok:
+    name: CI OK
+    runs-on: ubuntu-latest
+    needs: [lint, types, test, import-smoke, audit]
+    # ВАЖНО: если убрать if: always(), по умолчанию GitHub Actions пропускает (skipped)
+    # эту джобу целиком при падении любой из needs — а пропущенный required-чек
+    # branch protection засчитывает как пройденный. Из-за этого красный lint/test
+    # молча проходил бы в merge. always() гарантирует, что джоба всегда выполнится и
+    # явно провалится, если что-то из блокирующих не success.
+    if: always()
+    steps:
+      - name: Проверить обязательные джобы (audit — информационная, не блокирует)
+        run: |
+          echo "lint:         ${{ needs.lint.result }}"
+          echo "types:        ${{ needs.types.result }}  (baseline-гейт, блокирует на регрессе)"
+          echo "test:         ${{ needs.test.result }}"
+          echo "import-smoke: ${{ needs['import-smoke'].result }}"
+          echo "audit:        ${{ needs.audit.result }}  (continue-on-error — не блокирует)"
+
+          fail=0
+          [ "${{ needs.lint.result }}" = "success" ] || { echo "::error::lint: ${{ needs.lint.result }}"; fail=1; }
+          [ "${{ needs.types.result }}" = "success" ] || { echo "::error::types: ${{ needs.types.result }}"; fail=1; }
+          [ "${{ needs.test.result }}" = "success" ] || { echo "::error::test: ${{ needs.test.result }}"; fail=1; }
+          [ "${{ needs['import-smoke'].result }}" = "success" ] || { echo "::error::import-smoke: ${{ needs['import-smoke'].result }}"; fail=1; }
+
+          exit "$fail"

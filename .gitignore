@@ -10,3 +10,9 @@ __pycache__/
 data/
 audio/
 logs/
+.coverage
+
+# DB_PATH может указывать куда угодно, не только на data/ — это отдельная защита.
+*.db
+*.sqlite
+*.sqlite3

@@ -24,7 +24,9 @@ from aiohttp import web
 from loguru import logger
 
 from bot.config import settings
+from bot.db.database import get_db
 from bot.db.queries import get_stats, whitelist_add, whitelist_list, whitelist_remove
+from bot.services import heartbeat
 
 # ───────────────────────── Сессии (в памяти) ─────────────────────────
 _SESSION_TTL = 8 * 3600  # 8 часов
@@ -258,7 +260,8 @@ _ADMIN_HTML = """\
         <thead><tr><th>#</th><th>TG ID</th><th>Username</th><th>Заметка</th><th>Добавлен</th><th></th></tr></thead>
         <tbody id="wlBody"><tr><td colspan="6" style="color:#475569">Загрузка…</td></tr></tbody>
       </table>
-      <p class="note">⚠ Контент пользователей не хранится (Вариант А). Только метаданные.</p>
+      <p class="note">⚠ Аудиофайл удаляется сразу после обработки. Текст расшифровки хранится
+      в «Моих записях» RECORDS_RETENTION_DAYS дней, удаляется автоматически или раньше — командой /forget.</p>
     </div>
   </div>
 </div>
@@ -364,8 +367,31 @@ async def _api_auth_mw(request: web.Request, handler):
 
 # ───────────────────────── Healthcheck ───────────────────────────────────────
 
+async def _check_db() -> bool:
+    try:
+        async with get_db() as db:
+            await db.execute("SELECT 1;")
+        return True
+    except Exception as e:
+        logger.warning("Healthcheck: DB check failed: {e}", e=e)
+        return False
+
+
 async def _health(request: web.Request) -> web.Response:
-    return web.json_response({"ok": True, "service": "molvi-bot"})
+    # Раньше отдавал 200 безусловно — внешний монитор был бы зелёным на мёртвом
+    # боте. Теперь честно проверяет БД и то, жив ли polling (heartbeat).
+    db_ok = await _check_db()
+    polling_age = heartbeat.age_sec()
+    ok = db_ok and polling_age < heartbeat.STALE_AFTER_SEC
+    return web.json_response(
+        {
+            "ok": ok,
+            "db": db_ok,
+            "polling_age_sec": round(polling_age),
+            "uptime_sec": round(heartbeat.uptime()),
+        },
+        status=200 if ok else 503,
+    )
 
 
 # ───────────────────────── HTML admin routes ──────────────────────────────────
@@ -374,8 +400,9 @@ async def _admin_get(request: web.Request) -> web.Response:
     if not _valid_session(request):
         return web.Response(content_type="text/html",
                             text=_LOGIN_HTML.replace("<!--MOLVI_ERR-->", ""))
-    return web.Response(content_type="text/html",
-                        text=_ADMIN_HTML.replace("MOLVI_ADMIN_CSS", _CSS))
+    html = _ADMIN_HTML.replace("MOLVI_ADMIN_CSS", _CSS)
+    html = html.replace("RECORDS_RETENTION_DAYS", str(settings.records_retention_days))
+    return web.Response(content_type="text/html", text=html)
 
 
 async def _admin_login(request: web.Request) -> web.Response:
