@@ -101,6 +101,35 @@ def as_txt_file(filename: str, text: str) -> BufferedInputFile:
     return BufferedInputFile(data, filename=filename)
 
 
+# Ключи /start-payload (PR-13): s=source, m=medium, c=campaign, k=ключевая фраза,
+# i=Метрика ClientID, y=yclid — зона A4; p=токен платежа, r=реферальный код,
+# g=промокод — зона A7 (понадобятся в PR-14).
+_PAYLOAD_KEYS = frozenset("smckiyprg")
+_PAYLOAD_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def parse_start_payload(raw: str | None) -> dict[str, str]:
+    """'s_yd-m_cpc-c_brand' → {'s':'yd','m':'cpc','c':'brand'}.
+
+    Payload приходит от пользователя: доверять нельзя. Любой мусор → {}.
+    Незнакомые ключи молча отбрасываются. Значения обрезаются до 16 символов.
+    """
+    if not raw or not _PAYLOAD_RE.match(raw):
+        return {}
+    out: dict[str, str] = {}
+    for part in raw.split("-"):
+        key, sep, val = part.partition("_")
+        if sep and key in _PAYLOAD_KEYS and val:
+            out[key] = val[:16]
+    if not out and raw:  # обратная совместимость: голый source (например, /start promo)
+        out["s"] = raw[:16]
+    return out
+
+
+def source_label(p: dict[str, str]) -> str:
+    return f"{p.get('s', 'direct')}/{p.get('m', 'none')}"
+
+
 # Теги, которые реально встречаются в md_to_html() и которые Telegram parse_mode=HTML понимает.
 _SAFE_HTML_TAGS = {"b", "i", "u", "s", "code", "pre", "a"}
 

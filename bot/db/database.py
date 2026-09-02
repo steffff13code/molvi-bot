@@ -123,6 +123,15 @@ async def init_db() -> None:
         await db.execute("CREATE INDEX IF NOT EXISTS idx_events_err ON events(type, err_code, created_at);")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_events_model ON events(model, created_at);")
 
+        # Атрибуция (PR-13): источник первого захода, first-touch — см. upsert_user().
+        await _ensure_column(db, "users", "source", "TEXT")
+        await _ensure_column(db, "users", "campaign", "TEXT")
+        await _ensure_column(db, "users", "start_payload", "TEXT")
+        await _ensure_column(db, "users", "metrika_cid", "TEXT")
+        await _ensure_column(db, "users", "yclid", "TEXT")
+        await _ensure_column(db, "users", "source_at", "TIMESTAMP")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_users_source ON users(source);")
+
         await db.commit()
 
 

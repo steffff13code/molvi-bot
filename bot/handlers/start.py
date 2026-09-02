@@ -3,7 +3,7 @@ from __future__ import annotations
 import html as _html
 
 from aiogram import F, Router, types
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 
 from bot.config import settings
 from bot.db.queries import delete_user_records, get_minutes_used, get_stats_full, get_user_info, gift_minutes, has_consent, is_whitelisted, log_event, set_consent, upsert_user, whitelist_add, whitelist_remove
@@ -78,12 +78,15 @@ def _welcome(name: str) -> str:
 
 
 @router.message(Command("start"))
-async def cmd_start(message: types.Message) -> None:
+async def cmd_start(message: types.Message, command: CommandObject) -> None:
     user = message.from_user
     name = user.first_name if user and user.first_name else "друг"
 
     if user:
-        await upsert_user(user_id=user.id, username=user.username, first_name=user.first_name)
+        payload = (command.args or "")[:64]
+        await upsert_user(
+            user_id=user.id, username=user.username, first_name=user.first_name, payload=payload,
+        )
 
     if user and not await has_consent(user.id):
         await log_event(user_id=user.id, type_="consent_shown")
@@ -346,6 +349,12 @@ def _build_stats_text(s: dict) -> str:
         for key, cnt in s["templates"].items():
             name = _TEMPLATE_NAMES.get(key, key)
             lines.append(f"• {name}: <b>{cnt}</b>")
+
+    # Источники
+    if s["sources"]:
+        lines += ["", "━━━━━━━ 🔗 ИСТОЧНИКИ ━━━━━━━"]
+        for src, cnt in s["sources"].items():
+            lines.append(f"• {_html.escape(src)}: <b>{cnt}</b>")
 
     # Экспорт
     if s["exports_total"] > 0:
