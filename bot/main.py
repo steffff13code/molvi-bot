@@ -16,6 +16,7 @@ from bot.handlers.voice import router as voice_router
 from bot.logging import setup_logging
 from bot.services import heartbeat
 from bot.services.cleanup import start_cleanup_task
+from bot.services.jobs_recovery import notify_stalled_jobs
 from bot.services.notify import notifier
 
 
@@ -98,6 +99,10 @@ async def main() -> None:
         await start_api(settings.api_port)
     else:
         logger.info("API not started (no PORT in env)")
+
+    # Задачи, «осиротевшие» прошлым рестартом — до start_polling, иначе новые
+    # апдейты и восстановительные уведомления перемешаются в логах.
+    await notify_stalled_jobs(bot)
 
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("Bot polling started")

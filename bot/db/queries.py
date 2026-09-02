@@ -426,3 +426,39 @@ async def get_stats_full(days: int = 30, exclude_admin: bool = True) -> dict:
             "whitelist_count": whitelist_count,
             "sources": sources,
         }
+
+
+# ───────────────────────── Jobs (PR-20: надёжность-2) ─────────────────────────
+
+async def create_job(user_id: int, kind: str, token: str | None = None) -> int:
+    """Фиксирует начало «рискового» окна (STT/LLM в процессе) — если процесс
+    убьют до finish_job(), запись останется 'processing' и её найдёт
+    get_stalled_jobs() при следующем старте (jobs_recovery.py)."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "INSERT INTO jobs(user_id, kind, token, state) VALUES(?, ?, ?, 'processing');",
+            (user_id, kind, token),
+        )
+        await db.commit()
+        return cur.lastrowid or 0
+
+
+async def finish_job(job_id: int, state: str) -> None:
+    """state: 'done' | 'failed'."""
+    async with get_db() as db:
+        await db.execute(
+            "UPDATE jobs SET state=?, updated_at=CURRENT_TIMESTAMP WHERE id=?;",
+            (state, job_id),
+        )
+        await db.commit()
+
+
+async def get_stalled_jobs() -> list[dict]:
+    """Всё, что осталось в 'processing' — процесс мог только что стартовать,
+    поэтому любая такая запись пережила незавершённое падение/рестарт."""
+    async with get_db() as db:
+        cur = await db.execute(
+            "SELECT id, user_id, kind, token, created_at FROM jobs WHERE state='processing' "
+            "ORDER BY id;",
+        )
+        return [dict(r) for r in await cur.fetchall()]

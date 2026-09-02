@@ -93,10 +93,25 @@ async def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- Надёжность-2 (PR-20): фиксирует, что было в работе на момент падения/
+            -- рестарта Railway. Если процесс убит между add_minutes() и показом
+            -- результата, запись остаётся в 'processing' — при следующем старте это
+            -- отличимо от "пользователь просто ничего не присылал" (см. jobs_recovery.py).
+            CREATE TABLE IF NOT EXISTS jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token TEXT,
+                kind TEXT NOT NULL,            -- recognize | template
+                state TEXT NOT NULL DEFAULT 'processing',  -- processing | done | failed
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
             CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id, created_at);
             CREATE INDEX IF NOT EXISTS idx_events_type ON events(type, created_at);
             CREATE INDEX IF NOT EXISTS idx_records_user ON records(user_id, created_at);
+            CREATE INDEX IF NOT EXISTS idx_jobs_state ON jobs(state);
             """
         )
 

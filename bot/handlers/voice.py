@@ -11,6 +11,8 @@ from loguru import logger
 from bot.config import settings
 from bot.db.queries import (
     add_minutes,
+    create_job,
+    finish_job,
     get_minutes_used,
     has_consent,
     is_whitelisted,
@@ -289,6 +291,13 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         else:
             await status_msg.edit_text("Идёт расшифровка — подождите…")
 
+    # jobs (PR-20): от начала STT до показа результата пользователю уже могут быть
+    # списаны минуты — если процесс убьют посреди этого окна (рестарт Railway),
+    # запись останется 'processing' и её найдёт jobs_recovery.py при следующем
+    # старте, вместо того чтобы пользователь смотрел на вечное «⏳» и, не зная,
+    # что расшифровка уже готова и оплачена, прислал файл повторно.
+    job_id = await create_job(user.id, kind="recognize")
+
     try:
         stt_path = source_path
         actual_duration_sec = duration_sec
@@ -307,6 +316,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
         # из events и от бота, а не от пользователей в поддержке.
         await log_event(user_id=user.id, type_="error", err_code="stt_quota")
         notifier.notify("provider_quota", "🔥 STT-провайдер вернул 402 — пакет распознавания исчерпан.")
+        await finish_job(job_id, "failed")
         await status_msg.edit_text(
             "⚠️ Сервис распознавания временно недоступен (исчерпан пакет). "
             "Мы уже пополняем баланс — попробуйте чуть позже."
@@ -315,6 +325,7 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     except Exception as e:
         logger.exception("Recognition failed: {e}", e=e)
         await log_event(user_id=user.id, type_="error", err_code="stt_fail")
+        await finish_job(job_id, "failed")
         await status_msg.edit_text(
             "⚠️ Не удалось расшифровать запись. Попробуйте ещё раз через минуту."
         )
@@ -355,9 +366,11 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
             parse_mode="HTML",
             reply_markup=choose_mode_kb(token),
         )
+        await finish_job(job_id, "done")
     except Exception as e:
         logger.exception("Post-STT delivery failed: {e}", e=e)
         await log_event(user_id=user.id, type_="error")
+        await finish_job(job_id, "failed")
         await status_msg.edit_text(
             "⚠️ Расшифровка готова, но не удалось её показать. "
             "Откройте «📁 Мои записи» — она там."
