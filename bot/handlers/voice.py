@@ -548,6 +548,7 @@ async def _process(cb: types.CallbackQuery, token: str, key: str) -> None:
                 lambda: _llm.call(
                     text=prefix + entry.transcript, system=system,
                     on_wait=_on_llm_wait, on_start=_on_llm_start,
+                    model=settings.llm_model_write or None,
                 ),
                 attempts=3,
                 base_delay=1.0,

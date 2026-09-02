@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import httpx
 from loguru import logger
@@ -30,6 +31,7 @@ class GigaChatClient:
     auth_key: str
     scope: str = "GIGACHAT_API_PERS"
     model: str = "GigaChat-2-Pro"
+    base_url: str = "https://api.giga.chat"
     _token: AccessToken | None = None
 
     async def _get_token(self) -> str:
@@ -38,12 +40,24 @@ class GigaChatClient:
         self._token = await fetch_access_token(auth_key=self.auth_key, scope=self.scope)
         return self._token.token
 
-    async def call(self, *, system: str, user: str, temperature: float = 0.3, max_tokens: int = 2000) -> LLMResult:
+    async def call(
+        self, *, system: str, user: str, temperature: float = 0.3, max_tokens: int = 2000,
+        model: str | None = None, response_format: dict[str, Any] | None = None,
+    ) -> LLMResult:
+        """response_format — например {"type":"json_schema","json_schema":{...,"strict":True}}
+        для шагов конвейера (PR-17/18), которым нужен строгий JSON, а не проза. Без
+        strict модель дорисовывает поля вне схемы. Пока ни один вызывающий код не
+        передаёт response_format — поведение при None не меняется."""
         token = await self._get_token()
-        url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
-        payload = {
-            "model": self.model,
+        url = f"{self.base_url.rstrip('/')}/api/v1/chat/completions"
+        # На api.giga.chat без User-Agent документация обещает 403 (ROADMAP.md, G1).
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "User-Agent": "molvi-bot/1.0",
+        }
+        payload: dict[str, Any] = {
+            "model": model or self.model,
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -51,6 +65,8 @@ class GigaChatClient:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        if response_format is not None:
+            payload["response_format"] = response_format
 
         # 60с общего таймаута не хватает на генерацию 3500 токенов на длинных
         # записях — это и есть источник лишних ретраев, которые упомянуты в PR-6.
@@ -73,7 +89,7 @@ class GigaChatClient:
         usage = data.get("usage") or {}
         return LLMResult(
             text=text,
-            model=str(data.get("model") or self.model),
+            model=str(data.get("model") or model or self.model),
             tokens_in=int(usage.get("prompt_tokens") or 0),
             tokens_out=int(usage.get("completion_tokens") or 0),
             tokens_cached=int(usage.get("precached_prompt_tokens") or 0),

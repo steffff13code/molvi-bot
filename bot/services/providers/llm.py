@@ -14,9 +14,9 @@ OnStart = Callable[[], Awaitable[None]]
 
 
 class LLMProvider(Protocol):
-    async def summarize(self, *, text: str, system: str) -> str: ...
     async def call(
         self, *, text: str, system: str, on_wait: OnWait | None = None, on_start: OnStart | None = None,
+        model: str | None = None,
     ) -> LLMResult: ...
 
 
@@ -26,26 +26,24 @@ class GigaChatLLM:
             auth_key=settings.gigachat_auth_key,
             scope=settings.gigachat_scope,
             model=settings.gigachat_model,
+            base_url=settings.gigachat_base_url,
         )
 
     async def call(
         self, *, text: str, system: str, on_wait: OnWait | None = None, on_start: OnStart | None = None,
+        model: str | None = None,
     ) -> LLMResult:
         # Захват на границе провайдера (а не в хендлере) — разрешение освобождается
         # на паузах между ретраями, и будущие проходы конвейера (PR-18) покрываются
         # автоматически. v3: точность важнее креатива (temp 0.2); подробное summary
         # требует запаса токенов.
         return await LLM_LANE.run(
-            lambda: self._client.call(system=system, user=text, temperature=0.2, max_tokens=3500),
+            lambda: self._client.call(
+                system=system, user=text, temperature=0.2, max_tokens=3500, model=model,
+            ),
             on_wait=on_wait,
             on_start=on_start,
         )
-
-    async def summarize(self, *, text: str, system: str) -> str:
-        """Совместимость: только текст, без метрик расхода токенов.
-        Полная новая сигнатура для вызывающего кода — в PR-16."""
-        result = await self.call(text=text, system=system)
-        return result.text
 
 
 def get_llm() -> LLMProvider:
