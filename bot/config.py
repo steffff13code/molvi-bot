@@ -75,6 +75,8 @@ class Settings(BaseSettings):
 
     # Админ / API
     admin_id: int = 0               # Telegram ID владельца (для /stats)
+    admin_chat_id: int = 0          # куда слать уведомления AdminNotifier; 0 = admin_id
+    heartbeat_url: str = ""         # внешний монитор — пинг раз в 300с, только пока polling жив
     admin_api_token: str = ""       # секрет для HTTP-API (X-Admin-Token)
     admin_password_hash: str = ""   # bcrypt-хеш пароля web-панели (предпочтительно)
     admin_password: str = ""        # plaintext-пароль (legacy; используется если hash не задан)

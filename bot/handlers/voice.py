@@ -31,6 +31,7 @@ from bot.prompts.system_prompts import TEMPLATES, build_summary_prompt
 from bot.services.audio import AUDIO_DIR, ensure_dirs, probe_duration, trim_audio
 from bot.services.export import build_export
 from bot.services.nav_cleanup import nav_cleanup
+from bot.services.notify import notifier
 from bot.services.pricing import FREE_MINUTES, paywall_text, template_limit_text
 from bot.services.providers import STTQuotaError, get_llm, get_stt
 from bot.services.retry import with_retries
@@ -303,8 +304,9 @@ async def handle_audio(message: types.Message, bot: Bot) -> None:
     except STTQuotaError:
         logger.error("STT quota exhausted (402)")
         # Сервис лежит для ВСЕХ пользователей — владелец должен узнавать об этом
-        # из events, а не от пользователей в поддержке.
+        # из events и от бота, а не от пользователей в поддержке.
         await log_event(user_id=user.id, type_="error", err_code="stt_quota")
+        notifier.notify("provider_quota", "🔥 STT-провайдер вернул 402 — пакет распознавания исчерпан.")
         await status_msg.edit_text(
             "⚠️ Сервис распознавания временно недоступен (исчерпан пакет). "
             "Мы уже пополняем баланс — попробуйте чуть позже."

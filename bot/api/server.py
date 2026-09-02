@@ -24,7 +24,9 @@ from aiohttp import web
 from loguru import logger
 
 from bot.config import settings
+from bot.db.database import get_db
 from bot.db.queries import get_stats, whitelist_add, whitelist_list, whitelist_remove
+from bot.services import heartbeat
 
 # ───────────────────────── Сессии (в памяти) ─────────────────────────
 _SESSION_TTL = 8 * 3600  # 8 часов
@@ -365,8 +367,31 @@ async def _api_auth_mw(request: web.Request, handler):
 
 # ───────────────────────── Healthcheck ───────────────────────────────────────
 
+async def _check_db() -> bool:
+    try:
+        async with get_db() as db:
+            await db.execute("SELECT 1;")
+        return True
+    except Exception as e:
+        logger.warning("Healthcheck: DB check failed: {e}", e=e)
+        return False
+
+
 async def _health(request: web.Request) -> web.Response:
-    return web.json_response({"ok": True, "service": "molvi-bot"})
+    # Раньше отдавал 200 безусловно — внешний монитор был бы зелёным на мёртвом
+    # боте. Теперь честно проверяет БД и то, жив ли polling (heartbeat).
+    db_ok = await _check_db()
+    polling_age = heartbeat.age_sec()
+    ok = db_ok and polling_age < heartbeat.STALE_AFTER_SEC
+    return web.json_response(
+        {
+            "ok": ok,
+            "db": db_ok,
+            "polling_age_sec": round(polling_age),
+            "uptime_sec": round(heartbeat.uptime()),
+        },
+        status=200 if ok else 503,
+    )
 
 
 # ───────────────────────── HTML admin routes ──────────────────────────────────
