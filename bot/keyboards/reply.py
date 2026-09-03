@@ -9,7 +9,6 @@ BTN_TEMPLATES = "📋 Шаблоны"
 BTN_TARIFFS = "💳 Тарифы / Купить минуты"
 BTN_HELP = "ℹ️ Помощь"
 BTN_MY_RECORDS = "📁 Мои записи"
-BTN_DEVICE = BTN_HOME  # обратная совместимость
 
 
 def main_menu_kb() -> ReplyKeyboardMarkup:

@@ -27,7 +27,7 @@ def _help_text() -> str:
         f"<b>Лимит:</b> {FREE_MINUTES} минут бесплатно, далее от {PRICE_PER_HOUR} ₽/час (пакеты до 2 499 ₽/50 ч).\n"
         "<b>Форматы:</b> голосовые, MP3, M4A, WAV, OGG, FLAC, видео (MP4, MOV) и др.\n"
         "<b>Приватность:</b> аудиофайл удаляется сразу после расшифровки. Серверы в России (152-ФЗ).\n\n"
-        "🌐 Сайт: <a href=\"https://molvi-ai.ru/transcribe/\">molvi-ai.ru/transcribe</a>"
+        "🌐 Сайт: <a href=\"https://molvi-ai.ru/\">molvi-ai.ru</a>"
     )
 
 

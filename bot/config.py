@@ -102,7 +102,7 @@ class Settings(BaseSettings):
 
     # Public URLs (используются в меню/кнопках бота)
     site_url: str = "https://molvi-ai.ru/"
-    landing_url: str = "https://molvi-ai.ru/transcribe/"
+    landing_url: str = "https://molvi-ai.ru/"
     bot_url: str = "https://t.me/molviai_bot"
 
     @property

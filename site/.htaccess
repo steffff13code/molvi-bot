@@ -1,3 +1,7 @@
 <IfModule mod_rewrite.c>
 RewriteEngine On
+
+# PR-12: рокировка главной — /transcribe/ упразднён, его контент теперь на /.
+RewriteRule ^transcribe/?$ / [R=301,L]
+RewriteRule ^transcribe/(.*)$ /$1 [R=301,L]
 </IfModule>
