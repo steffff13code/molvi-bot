@@ -90,7 +90,7 @@ def result_kb(token: str) -> InlineKeyboardMarkup:
     )
 
 
-# ───────────────────────── Тарифы / устройство / сайт ─────────────────────────
+# ───────────────────────── Тарифы / сайт ─────────────────────────
 
 def website_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -126,13 +126,5 @@ def paywall_kb() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🏠 Главная", url=settings.site_url),
                 InlineKeyboardButton(text="🎙 Расшифровать", callback_data="go:transcribe"),
             ],
-        ]
-    )
-
-
-def device_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🌐 molvi-ai.ru", url=settings.site_url)],
         ]
     )

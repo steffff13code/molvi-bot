@@ -63,14 +63,6 @@ TRANSCRIBE_HINT = (
     "После распознавания выберите «🎙 Просто расшифровка» или «📋 Шаблоны»."
 )
 
-DEVICE_TEXT = (
-    "🛒 <b>AI-диктофон МОЛВИ</b>\n\n"
-    "Физическое устройство: записывает встречи, а расшифровка "
-    "автоматически приходит в этого бота.\n\n"
-    "Подробности, характеристики и заказ — на сайте 👇"
-)
-
-
 def _welcome(name: str) -> str:
     return WELCOME_TEXT.format(
         name=_html.escape(name), free=FREE_MINUTES, retention=settings.records_retention_days,
